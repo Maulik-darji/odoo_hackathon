@@ -200,20 +200,6 @@ export default function RegisterPage() {
                 {error}
               </div>
             )}
-            
-            {/* Hackathon convenience helper */}
-            {receivedOtp && (
-              <div className="bg-emerald-50 text-emerald-800 text-sm p-3.5 rounded-lg border border-emerald-150 font-medium flex justify-between items-center animate-fade-in">
-                <span>Verification OTP (demo mode): <strong>{receivedOtp}</strong></span>
-                <button 
-                  type="button" 
-                  onClick={() => setOtp(receivedOtp)}
-                  className="text-xs bg-emerald-600 text-white px-2 py-1 rounded hover:bg-emerald-700"
-                >
-                  Auto-fill
-                </button>
-              </div>
-            )}
 
             <div className="space-y-2.5">
               <Label htmlFor="otp" className="text-sm font-semibold text-slate-700 uppercase tracking-wide text-xs">Verification Code</Label>
