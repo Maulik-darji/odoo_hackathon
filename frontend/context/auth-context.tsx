@@ -107,6 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const clearError = () => setError(null);
 
   return (
+    <AuthContext.Provider
       value={{
         user,
         setUser,
