@@ -17,7 +17,6 @@ export default function ManageAccessPage() {
   // Query users
   const { data: users = [], isLoading, error, refetch } = useQuery<UserResponse[]>({
     queryKey: ["usersList"],
-    queryFn: api.getDrivers, // wait! we defined users endpoints, so we need to call api.getUsers or direct fetch.
     // Let's implement dynamic direct fetch since api.ts doesn't have getUsers method yet.
     // Actually, we can define a method getUsers in api.ts, or just fetch it here.
     // Let's see: we can fetch directly from `/users/` using the api client request function, or define a getMe/getUsers wrapper.
