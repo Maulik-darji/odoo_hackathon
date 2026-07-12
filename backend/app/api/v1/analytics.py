@@ -156,8 +156,8 @@ def get_dashboard_stats(
             "pending_trips": draft_trips,
             "total_trips": total_trips,
             "completed_trips": completed_trips,
-            "operational_cost": f"${total_cost:,.2f}",
-            "fuel_cost": f"${fuel_cost:,.2f}",
+            "operational_cost": f"₹{total_cost:,.2f}",
+            "fuel_cost": f"₹{fuel_cost:,.2f}",
             "fuel_efficiency": f"{fuel_efficiency} km/L",
         },
         "fleet_status": [

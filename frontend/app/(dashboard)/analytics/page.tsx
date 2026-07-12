@@ -32,7 +32,7 @@ export default function AnalyticsPage() {
     total_fleet_size: 0,
     in_shop: 0,
     active_trips: 0,
-    operational_cost: "$0.00",
+    operational_cost: "₹0.00",
   };
 
   const fleetStatusData = data?.fleet_status || [];
@@ -121,7 +121,7 @@ export default function AnalyticsPage() {
                     <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} tickLine={false} />
                     <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} />
                     <Tooltip cursor={{ fill: "#f1f5f9" }} />
-                    <Bar dataKey="fuel" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Revenue ($)" />
+                    <Bar dataKey="fuel" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Revenue (₹)" />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
