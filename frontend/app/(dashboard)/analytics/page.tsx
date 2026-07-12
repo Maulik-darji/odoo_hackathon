@@ -28,7 +28,7 @@ const COLORS = ["#0f172a", "#3b82f6", "#64748b", "#cbd5e1"];
 export default function AnalyticsPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["dashboardStats"],
-    queryFn: api.getDashboardStats,
+    queryFn: () => api.getDashboardStats(),
   });
 
   const kpis = data?.kpis || {
@@ -201,7 +201,7 @@ export default function AnalyticsPage() {
                     <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} tickFormatter={(v) => `₹${v >= 1000 ? `${(v/1000).toFixed(0)}k` : v}`} />
                     <Tooltip
                       cursor={{ fill: "#f1f5f9" }}
-                      formatter={(value: number) => [`₹${value.toLocaleString('en-IN')}`, "Revenue"]}
+                      formatter={(value: any) => [`₹${Number(value).toLocaleString('en-IN')}`, "Revenue"]}
                       contentStyle={{ borderRadius: "12px", border: "1px solid #e2e8f0", fontSize: "12px" }}
                     />
                     <Bar dataKey="revenue" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Revenue (₹)" animationDuration={400} />

@@ -19,6 +19,7 @@ export interface UserResponse {
   tour_completed: boolean;
   is_approved?: boolean;
   is_admin?: boolean;
+  requested_role?: string;
   created_at: string;
 }
 
