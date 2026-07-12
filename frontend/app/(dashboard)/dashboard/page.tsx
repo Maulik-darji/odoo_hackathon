@@ -140,7 +140,7 @@ export default function DashboardPage() {
             Get started by registering your first transport vehicle to track metrics and operations.
           </p>
           <a
-            href="/dashboard/vehicles"
+            href="/vehicles"
             className="inline-flex h-10 items-center justify-center rounded-lg bg-slate-900 px-4 text-sm font-medium text-white hover:bg-slate-800"
           >
             Add Vehicle

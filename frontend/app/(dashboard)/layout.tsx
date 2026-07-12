@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
 import { Button } from "@/components/ui/button";
+import { OnboardingTour } from "@/components/onboarding-tour";
 import {
   LayoutDashboard,
   Truck,
@@ -14,7 +15,10 @@ import {
   BarChart3,
   Settings,
   LogOut,
+  Bell,
+  Menu,
 } from "lucide-react";
+import { useState, useEffect } from "react";
 
 export default function DashboardLayout({
   children,
@@ -23,29 +27,52 @@ export default function DashboardLayout({
 }) {
   const { user, logout } = useAuth();
   const pathname = usePathname();
+  
+  // Persist sidebar state
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  
+  useEffect(() => {
+    const savedState = localStorage.getItem("sidebar_open");
+    if (savedState !== null) {
+      setIsSidebarOpen(savedState === "true");
+    }
+  }, []);
+
+  const toggleSidebar = () => {
+    const newState = !isSidebarOpen;
+    setIsSidebarOpen(newState);
+    localStorage.setItem("sidebar_open", String(newState));
+  };
 
   const navigation = [
-    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-    { name: "Vehicles", href: "/dashboard/vehicles", icon: Truck },
-    { name: "Drivers", href: "/dashboard/drivers", icon: Users },
-    { name: "Trips", href: "/dashboard/trips", icon: Route },
-    { name: "Maintenance", href: "/dashboard/maintenance", icon: Wrench },
-    { name: "Fuel & Expenses", href: "/dashboard/expenses", icon: Fuel },
-    { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
-    { name: "Settings", href: "/dashboard/settings", icon: Settings },
+    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, tourClass: "tour-dashboard" },
+    { name: "Vehicles", href: "/vehicles", icon: Truck, tourClass: "tour-vehicles" },
+    { name: "Drivers", href: "/drivers", icon: Users, tourClass: "tour-drivers" },
+    { name: "Trips", href: "/trips", icon: Route, tourClass: "tour-trips" },
+    { name: "Maintenance", href: "/maintenance", icon: Wrench, tourClass: "tour-maintenance" },
+    { name: "Fuel & Expenses", href: "/expenses", icon: Fuel, tourClass: "tour-expenses" },
+    { name: "Analytics", href: "/analytics", icon: BarChart3, tourClass: "tour-analytics" },
+    { name: "Settings", href: "/settings", icon: Settings, tourClass: "tour-settings" },
   ];
 
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden font-sans selection:bg-slate-200">
+      <OnboardingTour />
+      
       {/* Sidebar */}
-      <aside className="w-64 border-r border-slate-200 bg-white flex flex-col justify-between shrink-0">
+      <aside className={`border-r border-slate-200 bg-white flex flex-col justify-between shrink-0 transition-all duration-300 ${isSidebarOpen ? 'w-64' : 'w-20'}`}>
         <div className="flex flex-col">
           {/* Logo */}
-          <div className="h-16 px-6 border-b border-slate-100 flex items-center gap-2">
-            <div className="w-7 h-7 bg-slate-900 rounded-lg flex items-center justify-center">
-              <span className="text-white font-semibold text-xs">T</span>
+          <div className="h-16 px-6 border-b border-slate-100 flex items-center justify-between gap-2 overflow-hidden">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 bg-slate-900 rounded-lg flex items-center justify-center shrink-0">
+                <span className="text-white font-semibold text-xs">T</span>
+              </div>
+              {isSidebarOpen && <span className="font-semibold text-base tracking-tight text-slate-900 transition-opacity whitespace-nowrap">TransitOps</span>}
             </div>
-            <span className="font-semibold text-base tracking-tight text-slate-900">TransitOps</span>
+            <Button variant="ghost" size="icon" onClick={toggleSidebar} className="shrink-0 -mr-2">
+              <Menu className="h-4 w-4 text-slate-500" />
+            </Button>
           </div>
 
           {/* Navigation Links */}
@@ -56,35 +83,38 @@ export default function DashboardLayout({
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${item.tourClass} ${
                     isActive
-                      ? "bg-slate-900 text-white"
-                      : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"
+                      ? "bg-slate-100 text-slate-900"
+                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                   }`}
+                  title={!isSidebarOpen ? item.name : undefined}
                 >
-                  <item.icon className="w-4 h-4 shrink-0" />
-                  {item.name}
+                  <item.icon className={`shrink-0 ${isActive ? "text-slate-900" : "text-slate-400"} ${isSidebarOpen ? "mr-3 h-5 w-5" : "mx-auto h-5 w-5"}`} />
+                  {isSidebarOpen && <span className="truncate">{item.name}</span>}
                 </Link>
               );
             })}
           </nav>
         </div>
-
-        {/* User profile & Logout */}
+        {/* User Menu */}
         <div className="p-4 border-t border-slate-100 flex items-center justify-between">
-          <div className="flex flex-col min-w-0 pr-2">
-            <span className="text-sm font-semibold text-slate-900 truncate">
-              {user?.name || "User Name"}
-            </span>
-            <span className="text-xs text-slate-400 truncate">
-              {user?.role || "Fleet Manager"}
-            </span>
-          </div>
+          {isSidebarOpen && (
+            <div className="flex flex-col min-w-0 pr-2">
+              <span className="text-sm font-semibold text-slate-900 truncate">
+                {user?.name || "User Name"}
+              </span>
+              <span className="text-xs text-slate-400 truncate">
+                {user?.role || "Fleet Manager"}
+              </span>
+            </div>
+          )}
           <Button
             variant="ghost"
             size="icon"
             onClick={logout}
-            className="text-slate-400 hover:text-slate-900 rounded-lg"
+            className={`text-slate-400 hover:text-slate-900 rounded-lg ${!isSidebarOpen ? "w-full justify-center" : ""}`}
+            title={!isSidebarOpen ? "Logout" : undefined}
           >
             <LogOut className="w-4 h-4" />
           </Button>
