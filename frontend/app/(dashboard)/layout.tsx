@@ -18,6 +18,9 @@ import {
   Menu,
   Clock,
   ShieldCheck,
+  Bell,
+  ShieldAlert,
+  Sparkles,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -29,10 +32,50 @@ export default function DashboardLayout({
   const { user, logout } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
+
+  const userRole = user?.role || "Fleet Manager";
+  const isAdmin = user?.is_admin || false;
+  const isApproved = user?.is_approved || false;
   
   // Persist sidebar state
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  const getRoleNotifications = (role: string) => {
+    switch (role) {
+      case "Fleet Manager":
+        return [
+          { id: 1, title: "Vehicle Maintenance Oil Change Complete", time: "10 mins ago" },
+          { id: 2, title: "Odometer alert for Vehicle MH03EF9012", time: "1 hour ago" },
+          { id: 3, title: "Tata Ultra van capacity check passed", time: "3 hours ago" }
+        ];
+      case "Dispatcher":
+        return [
+          { id: 1, title: "Trip to Delhi status updated to Dispatched", time: "5 mins ago" },
+          { id: 2, title: "New Route assigned Mumbai → Pune", time: "30 mins ago" },
+          { id: 3, title: "Driver Alex confirmed check-in", time: "2 hours ago" }
+        ];
+      case "Safety Officer":
+        return [
+          { id: 1, title: "Bob's safety score increased to 95", time: "2 hours ago" },
+          { id: 2, title: "Safety alert: Driver license expiring soon", time: "1 day ago" },
+          { id: 3, title: "Roster review pending for new recruits", time: "3 days ago" }
+        ];
+      case "Financial Analyst":
+        return [
+          { id: 1, title: "Fuel cost threshold warning reached", time: "1 hour ago" },
+          { id: 2, title: "Toll cost report MH01AB1234 approved", time: "4 hours ago" },
+          { id: 3, title: "Permit payment processed successfully", time: "1 day ago" }
+        ];
+      default:
+        return [
+          { id: 1, title: "Welcome to TransitOps Management Platform", time: "Just now" }
+        ];
+    }
+  };
+
+  const notifications = getRoleNotifications(isAdmin ? "Admin" : userRole);
+
   useEffect(() => {
     const savedState = localStorage.getItem("sidebar_open");
     if (savedState !== null) {
@@ -54,25 +97,25 @@ export default function DashboardLayout({
     { name: "Maintenance", href: "/maintenance", icon: Wrench, tourClass: "tour-maintenance" },
     { name: "Fuel & Expenses", href: "/expenses", icon: Fuel, tourClass: "tour-expenses" },
     { name: "Analytics", href: "/analytics", icon: BarChart3, tourClass: "tour-analytics" },
-    { name: "Manage access", href: "/manage-access", icon: ShieldCheck, tourClass: "tour-manage-access" },
+    { name: "Manage access", href: "/admin/manage-access", icon: ShieldCheck, tourClass: "tour-manage-access" },
     { name: "Settings", href: "/settings", icon: Settings, tourClass: "tour-settings" },
+    { name: "Suspended accounts", href: "/admin/suspended-accounts", icon: ShieldAlert, tourClass: "tour-suspended" },
+    { name: "Upgrade", href: "/upgrade", icon: Sparkles, tourClass: "tour-upgrade" },
   ];
 
   // RBAC routing definition
   const roleRoutes: Record<string, string[]> = {
-    "Fleet Manager": ["Vehicles", "Maintenance", "Settings"],
-    "Dispatcher": ["Dashboard", "Trips", "Settings"],
-    "Safety Officer": ["Drivers", "Settings"],
-    "Financial Analyst": ["Fuel & Expenses", "Analytics", "Settings"]
+    "Fleet Manager": ["Vehicles", "Maintenance", "Settings", "Upgrade"],
+    "Dispatcher": ["Dashboard", "Trips", "Settings", "Upgrade"],
+    "Safety Officer": ["Drivers", "Settings", "Upgrade"],
+    "Financial Analyst": ["Fuel & Expenses", "Analytics", "Settings", "Upgrade"]
   };
 
-  const userRole = user?.role || "Fleet Manager";
-  const isAdmin = user?.is_admin || false;
-  const isApproved = user?.is_approved || false;
+
 
   // Filter navigation items
   const filteredNavigation = isAdmin 
-    ? navigation // Admin sees everything
+    ? navigation.filter(item => item.name !== "Upgrade") // Admin sees everything except Upgrade
     : navigation.filter(item => {
         // Non-admins only see their role-based items (excluding Manage Access)
         if (item.name === "Manage access") return false;
@@ -97,7 +140,7 @@ export default function DashboardLayout({
 
   const handleBypass = async () => {
     try {
-      const token = localStorage.getItem("access_token");
+      const token = sessionStorage.getItem("access_token");
       await fetch(`http://localhost:8000/api/v1/users/${user?.id}/approve`, {
         method: "PUT",
         headers: {
@@ -111,7 +154,7 @@ export default function DashboardLayout({
     // Update local storage and reload regardless of backend status to guarantee bypass works
     if (user) {
       const updatedUser = { ...user, is_approved: true };
-      localStorage.setItem("user", JSON.stringify(updatedUser));
+      sessionStorage.setItem("user", JSON.stringify(updatedUser));
       window.location.reload();
     }
   };
@@ -256,6 +299,36 @@ export default function DashboardLayout({
             {navigation.find((item) => item.href === pathname)?.name || "Dashboard"}
           </h1>
           <div className="flex items-center gap-4">
+            {/* Notification Bell */}
+            <div className="relative">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="relative text-slate-600 hover:bg-white/50 hover:text-slate-900 rounded-full h-9 w-9"
+              >
+                <Bell className="w-5 h-5" />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-blue-600 rounded-full"></span>
+              </Button>
+
+              {showNotifications && (
+                <div className="absolute right-0 mt-2 w-80 bg-white/95 backdrop-blur-xl border border-slate-200/60 rounded-2xl shadow-xl z-50 p-4 space-y-3.5">
+                  <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+                    <span className="font-semibold text-sm text-slate-800">Notifications ({notifications.length})</span>
+                    <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wide">Role: {isAdmin ? "Admin" : userRole}</span>
+                  </div>
+                  <div className="space-y-3 max-h-60 overflow-y-auto">
+                    {notifications.map((n) => (
+                      <div key={n.id} className="text-left space-y-0.5 hover:bg-slate-50 p-1.5 rounded-lg transition-colors">
+                        <p className="text-xs font-medium text-slate-800 leading-normal">{n.title}</p>
+                        <p className="text-[10px] text-slate-400 font-semibold">{n.time}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
             {isAdmin && (
               <span className="text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-1 rounded-full">
                 Admin Console

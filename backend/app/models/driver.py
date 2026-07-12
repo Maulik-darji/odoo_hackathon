@@ -19,5 +19,5 @@ class Driver(Base):
     license_expiry = Column(DateTime(timezone=True), nullable=False)
     contact_number = Column(String, nullable=True)
     safety_score = Column(Float, default=100.0) # 0-100 scale
-    status = Column(Enum(DriverStatusEnum), default=DriverStatusEnum.AVAILABLE, nullable=False)
+    status = Column(String, default=DriverStatusEnum.AVAILABLE.value, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

@@ -86,17 +86,17 @@
   align-items: center;
   gap: 0.25rem;
   padding: 0.35rem 0.5rem;
-  background: rgba(245, 244, 237, 0.7);
-  backdrop-filter: blur(28px) saturate(180%);
-  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  background: rgba(245, 244, 237, 0.75);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: 100px;
   box-shadow:
     0 20px 40px rgba(0, 0, 0, 0.06),
     0 1px 3px rgba(0, 0, 0, 0.02),
     inset 0 1px 0 rgba(255, 255, 255, 0.6);
-  transform: translate3d(0, 0, 0);
-  -webkit-transform: translate3d(0, 0, 0);
+  position: relative;
+  z-index: 101;
 }
 
 .nav-link {

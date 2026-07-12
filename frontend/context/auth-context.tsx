@@ -27,13 +27,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Load user from token on startup
   useEffect(() => {
     const initializeAuth = async () => {
-      const accessToken = localStorage.getItem("access_token");
+      const accessToken = sessionStorage.getItem("access_token");
       if (accessToken) {
         try {
           // Since getMe isn't implemented in the backend yet,
           // we'll temporarily parse user info from JWT claims,
-          // or load it from localStorage if we saved it on login.
-          const storedUser = localStorage.getItem("user");
+          // or load it from sessionStorage if we saved it on login.
+          const storedUser = sessionStorage.getItem("user");
           if (storedUser) {
             setUser(JSON.parse(storedUser));
           } else {
@@ -54,15 +54,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setError(null);
     try {
       const tokens = await api.login(email, password);
-      localStorage.setItem("access_token", tokens.access_token);
-      localStorage.setItem("refresh_token", tokens.refresh_token);
+      sessionStorage.setItem("access_token", tokens.access_token);
+      sessionStorage.setItem("refresh_token", tokens.refresh_token);
       
       // Store in cookies for middleware route protection
       document.cookie = `access_token=${tokens.access_token}; path=/; max-age=1800; SameSite=Lax`;
       
       const userDetails = await api.getMe();
       
-      localStorage.setItem("user", JSON.stringify(userDetails));
+      sessionStorage.setItem("user", JSON.stringify(userDetails));
       setUser(userDetails);
       router.push("/dashboard");
     } catch (err: any) {
@@ -88,9 +88,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
-    localStorage.removeItem("user");
+    sessionStorage.removeItem("access_token");
+    sessionStorage.removeItem("refresh_token");
+    sessionStorage.removeItem("user");
     // Clear cookie
     document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     setUser(null);

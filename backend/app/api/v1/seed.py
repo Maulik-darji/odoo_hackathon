@@ -24,20 +24,28 @@ def seed_demo_data(db: Session = Depends(get_db)):
         return {"status": "skipped", "detail": "Data already exists — seed was not re-run."}
 
     # ── Users ───────────────────────────────────────────────────────────
-    users = [
-        User(email="admin@transitops.com", name="Admin User",
+    user_data = [
+        dict(email="admin@transitops.com", name="Admin User",
              password_hash=get_password_hash("admin123"), role=RoleEnum.FLEET_MANAGER, is_admin=True, is_approved=True),
-        User(email="manager@transitops.com", name="Alice Manager",
+        dict(email="manager@transitops.com", name="Alice Manager",
              password_hash=get_password_hash("demo123"), role=RoleEnum.FLEET_MANAGER, is_approved=True),
-        User(email="dispatcher@transitops.com", name="Bob Dispatcher",
+        dict(email="dispatcher@transitops.com", name="Bob Dispatcher",
              password_hash=get_password_hash("demo123"), role=RoleEnum.DISPATCHER, is_approved=True),
-        User(email="safety@transitops.com", name="Carol Safety",
+        dict(email="safety@transitops.com", name="Carol Safety",
              password_hash=get_password_hash("demo123"), role=RoleEnum.SAFETY_OFFICER, is_approved=True),
-        User(email="finance@transitops.com", name="Dave Finance",
+        dict(email="finance@transitops.com", name="Dave Finance",
              password_hash=get_password_hash("demo123"), role=RoleEnum.FINANCIAL_ANALYST, is_approved=True),
     ]
-    db.add_all(users)
-    db.flush()
+    users = []
+    for ud in user_data:
+        existing = db.query(User).filter(User.email == ud["email"]).first()
+        if existing:
+            users.append(existing)
+        else:
+            u = User(**ud)
+            db.add(u)
+            db.flush()
+            users.append(u)
 
     # ── Vehicles ────────────────────────────────────────────────────────
     vehicles = [

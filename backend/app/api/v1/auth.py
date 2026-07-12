@@ -61,15 +61,58 @@ def register(user_in: UserCreate, db: Session = Depends(get_db)):
         )
     return create_user(db=db, user_in=user_in)
 
+from datetime import datetime, timezone
+
+# email -> {count: int, lock_until: datetime, consecutive_lockouts: int}
+login_attempts = {}
+
 @router.post("/login", response_model=Token)
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    email = form_data.username.lower().strip()
+    now = datetime.now(timezone.utc)
+    
+    # Check if locked out
+    attempt_info = login_attempts.get(email)
+    if attempt_info and attempt_info["lock_until"] and now < attempt_info["lock_until"]:
+        seconds_left = int((attempt_info["lock_until"] - now).total_seconds())
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"LOCKED_OUT:{attempt_info['lock_until'].isoformat()}"
+        )
+
     user = authenticate_user(db, email=form_data.username, password=form_data.password)
     if not user:
+        if not attempt_info:
+            attempt_info = {"count": 0, "lock_until": None, "consecutive_lockouts": 0}
+            login_attempts[email] = attempt_info
+            
+        attempt_info["count"] += 1
+        
+        if attempt_info["count"] >= 5:
+            attempt_info["consecutive_lockouts"] += 1
+            if attempt_info["consecutive_lockouts"] == 1:
+                lock_duration = timedelta(minutes=1)
+            elif attempt_info["consecutive_lockouts"] == 2:
+                lock_duration = timedelta(minutes=5)
+            else:
+                lock_duration = timedelta(minutes=10)
+                
+            attempt_info["lock_until"] = now + lock_duration
+            attempt_info["count"] = 0
+            
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"LOCKED_OUT:{attempt_info['lock_until'].isoformat()}"
+            )
+            
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
+            detail=f"Incorrect email or password. Attempt {attempt_info['count']}/5.",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    
+    # Reset lock state on success
+    login_attempts[email] = {"count": 0, "lock_until": None, "consecutive_lockouts": 0}
     
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(subject=user.email, expires_delta=access_token_expires)
@@ -122,3 +165,57 @@ def complete_tour(db: Session = Depends(get_db), current_user: UserResponse = De
         db.commit()
         db.refresh(user)
     return user
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    email: EmailStr
+    otp: str
+    new_password: str
+
+
+@router.post("/forgot-password")
+async def forgot_password(request_in: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    user = get_user_by_email(db, email=request_in.email)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No account associated with this email address"
+        )
+    otp = f"{random.randint(100000, 999999)}"
+    otp_store[request_in.email] = otp
+    
+    print("\n" + "="*50)
+    print(f"RESET OTP FOR {request_in.email}: {otp}")
+    print("="*50 + "\n")
+    
+    await send_verification_email(request_in.email, otp)
+    return {"message": "Reset verification code sent successfully"}
+
+
+@router.post("/reset-password")
+def reset_password(request_in: ResetPasswordRequest, db: Session = Depends(get_db)):
+    saved_otp = otp_store.get(request_in.email)
+    if not saved_otp or saved_otp != request_in.otp:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired verification code"
+        )
+        
+    user = get_user_by_email(db, email=request_in.email)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+        
+    user.password_hash = get_password_hash(request_in.new_password)
+    db.commit()
+    
+    # Remove OTP once verified and used
+    otp_store.pop(request_in.email, None)
+    
+    return {"message": "Password reset successful"}

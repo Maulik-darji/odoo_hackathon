@@ -169,6 +169,34 @@ export default function RegisterPage() {
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
+              {password && (() => {
+                const getStrength = (pass: string) => {
+                  let score = 0;
+                  if (pass.length >= 8) score += 1;
+                  if (/[A-Z]/.test(pass)) score += 1;
+                  if (/[0-9]/.test(pass)) score += 1;
+                  if (/[^A-Za-z0-9]/.test(pass)) score += 1;
+                  
+                  if (score <= 1) return { score, label: "Weak", color: "bg-red-500", text: "text-red-500" };
+                  if (score <= 3) return { score, label: "Medium", color: "bg-amber-500", text: "text-amber-500" };
+                  return { score, label: "Safe & Strong", color: "bg-emerald-500", text: "text-emerald-500" };
+                };
+                const strength = getStrength(password);
+                return (
+                  <div className="space-y-1.5 mt-1.5">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="font-medium text-slate-400">Password strength:</span>
+                      <span className={`font-semibold ${strength.text}`}>{strength.label}</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full ${strength.color} transition-all duration-300`} 
+                        style={{ width: `${(strength.score / 4) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
 
             <div className="space-y-2.5">

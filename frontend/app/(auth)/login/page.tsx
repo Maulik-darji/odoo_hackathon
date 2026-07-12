@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as zod from "zod";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -31,6 +31,38 @@ export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [lockoutTimeLeft, setLockoutTimeLeft] = useState<number | null>(null);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    const currentError = submitError || error;
+    if (currentError && currentError.startsWith("LOCKED_OUT:")) {
+      const isoString = currentError.replace("LOCKED_OUT:", "");
+      const unlockTime = new Date(isoString).getTime();
+      
+      const updateTimer = () => {
+        const now = new Date().getTime();
+        const diff = Math.ceil((unlockTime - now) / 1000);
+        if (diff <= 0) {
+          setLockoutTimeLeft(null);
+          setSubmitError(null);
+          clearError();
+          if (interval) clearInterval(interval);
+        } else {
+          setLockoutTimeLeft(diff);
+        }
+      };
+      
+      updateTimer();
+      interval = setInterval(updateTimer, 1000);
+    } else {
+      setLockoutTimeLeft(null);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [submitError, error, clearError]);
 
   const {
     register,
@@ -68,7 +100,11 @@ export default function LoginPage() {
           {/* Display general errors */}
           {(submitError || error) && (
             <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg border border-red-100 font-medium">
-              {submitError || error}
+              {lockoutTimeLeft !== null ? (
+                `Too many failed attempts. Locked out. Try again in ${Math.floor(lockoutTimeLeft / 60)}m ${lockoutTimeLeft % 60}s.`
+              ) : (
+                submitError || error
+              )}
             </div>
           )}
 
@@ -122,7 +158,7 @@ export default function LoginPage() {
         <CardFooter className="flex flex-col space-y-6 pb-8 px-8 pt-4">
           <Button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || lockoutTimeLeft !== null}
             className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white font-medium rounded-full disabled:opacity-50 transition-transform active:scale-[0.98]"
           >
             {isSubmitting ? "Signing in..." : "Sign in"}

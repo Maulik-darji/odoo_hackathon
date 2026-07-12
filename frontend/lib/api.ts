@@ -49,7 +49,7 @@ const onRefreshed = (token: string) => {
 };
 
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+  const token = typeof window !== "undefined" ? sessionStorage.getItem("access_token") : null;
   
   const headers = new Headers(options.headers);
   if (token && !headers.has("Authorization")) {
@@ -67,7 +67,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 
   // Handle 401 Unauthorized by attempting to refresh the token
   if (response.status === 401) {
-    const refreshToken = typeof window !== "undefined" ? localStorage.getItem("refresh_token") : null;
+    const refreshToken = typeof window !== "undefined" ? sessionStorage.getItem("refresh_token") : null;
     
     if (refreshToken && endpoint !== "/auth/login") {
       if (!isRefreshing) {
@@ -81,9 +81,9 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 
           if (refreshRes.ok) {
             const data = await refreshRes.json();
-            localStorage.setItem("access_token", data.access_token);
+            sessionStorage.setItem("access_token", data.access_token);
             if (data.refresh_token) {
-              localStorage.setItem("refresh_token", data.refresh_token);
+              sessionStorage.setItem("refresh_token", data.refresh_token);
             }
             onRefreshed(data.access_token);
             
@@ -92,13 +92,13 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
             response = await fetch(`${API_BASE_URL}${endpoint}`, { ...options, headers });
           } else {
             // Refresh failed, logout
-            localStorage.removeItem("access_token");
-            localStorage.removeItem("refresh_token");
+            sessionStorage.removeItem("access_token");
+            sessionStorage.removeItem("refresh_token");
             window.location.href = "/login";
           }
         } catch (error) {
-          localStorage.removeItem("access_token");
-          localStorage.removeItem("refresh_token");
+          sessionStorage.removeItem("access_token");
+          sessionStorage.removeItem("refresh_token");
           window.location.href = "/login";
         } finally {
           isRefreshing = false;
@@ -116,7 +116,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
       }
     } else if (endpoint !== "/auth/login") {
       // No refresh token available, redirect to login
-      localStorage.removeItem("access_token");
+      sessionStorage.removeItem("access_token");
       window.location.href = "/login";
     }
   }
@@ -151,6 +151,20 @@ export const api = {
     });
   },
 
+  forgotPassword: async (email: string): Promise<{ message: string }> => {
+    return request<{ message: string }>("/auth/forgot-password", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    });
+  },
+
+  resetPassword: async (email: string, otp: string, newPassword: string): Promise<{ message: string }> => {
+    return request<{ message: string }>("/auth/reset-password", {
+      method: "POST",
+      body: JSON.stringify({ email, otp, new_password: newPassword }),
+    });
+  },
+
   register: async (name: string, email: string, password: string, role: string = "Fleet Manager"): Promise<UserResponse> => {
     return request<UserResponse>("/auth/register", {
       method: "POST",
@@ -180,8 +194,13 @@ export const api = {
     return request<UserResponse>("/auth/tour", { method: "PUT" });
   },
 
-  getDashboardStats: async (): Promise<any> => {
-    return request<any>("/analytics/dashboard");
+  getDashboardStats: async (params?: { vehicle_type?: string; status_filter?: string; region?: string }): Promise<any> => {
+    const query = new URLSearchParams();
+    if (params?.vehicle_type) query.append("vehicle_type", params.vehicle_type);
+    if (params?.status_filter) query.append("status_filter", params.status_filter);
+    if (params?.region) query.append("region", params.region);
+    const qs = query.toString();
+    return request<any>(`/analytics/dashboard${qs ? `?${qs}` : ""}`);
   },
 
   // Vehicles
@@ -213,4 +232,17 @@ export const api = {
   createExpense: async (data: any): Promise<any> => request<any>("/expenses/", { method: "POST", body: JSON.stringify(data) }),
   updateExpense: async (id: number, data: any): Promise<any> => request<any>(`/expenses/${id}`, { method: "PUT", body: JSON.stringify(data) }),
   deleteExpense: async (id: number): Promise<any> => request<any>(`/expenses/${id}`, { method: "DELETE" }),
+
+  requestRoleUpgrade: async (requestedRole: string): Promise<UserResponse> => {
+    return request<UserResponse>("/users/request-role", {
+      method: "PUT",
+      body: JSON.stringify({ requested_role: requestedRole }),
+    });
+  },
+
+  approveRoleUpgrade: async (userId: number): Promise<UserResponse> => {
+    return request<UserResponse>(`/users/${userId}/approve-role`, {
+      method: "PUT",
+    });
+  },
 };

@@ -14,6 +14,7 @@ class TripBase(BaseModel):
     end_time: Optional[datetime] = None
     status: Optional[TripStatusEnum] = TripStatusEnum.DRAFT
     route_details: Optional[str] = None
+    revenue: Optional[float] = 0.0
 
 class TripCreate(TripBase):
     pass
@@ -29,6 +30,7 @@ class TripUpdate(BaseModel):
     end_time: Optional[datetime] = None
     status: Optional[TripStatusEnum] = None
     route_details: Optional[str] = None
+    revenue: Optional[float] = None
 
 class TripResponse(TripBase):
     id: int

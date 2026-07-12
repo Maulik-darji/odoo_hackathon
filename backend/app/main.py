@@ -22,9 +22,38 @@ async def lifespan(_: FastAPI):
         try:
             conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS is_approved BOOLEAN DEFAULT FALSE"))
             conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE"))
+            conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS requested_role VARCHAR DEFAULT NULL"))
+            
+            # Alter existing columns to VARCHAR to bypass PostgreSQL enum case mismatch crashes
+            conn.execute(text("ALTER TABLE vehicles ALTER COLUMN status TYPE VARCHAR"))
+            conn.execute(text("ALTER TABLE vehicles ALTER COLUMN vehicle_type TYPE VARCHAR"))
+            conn.execute(text("ALTER TABLE drivers ALTER COLUMN status TYPE VARCHAR"))
+            conn.execute(text("ALTER TABLE trips ALTER COLUMN status TYPE VARCHAR"))
+            conn.execute(text("ALTER TABLE users ALTER COLUMN role TYPE VARCHAR"))
+            conn.execute(text("ALTER TABLE users ALTER COLUMN requested_role TYPE VARCHAR"))
+            
+            conn.execute(text("ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS capacity FLOAT DEFAULT 0"))
+            conn.execute(text("ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS odometer FLOAT DEFAULT 0"))
+            conn.execute(text("ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS acquisition_cost FLOAT DEFAULT 0"))
+            conn.execute(text("ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS region VARCHAR DEFAULT 'National'"))
+            conn.execute(text("ALTER TABLE trips ADD COLUMN IF NOT EXISTS revenue FLOAT DEFAULT 0"))
+            conn.execute(text("ALTER TABLE drivers ADD COLUMN IF NOT EXISTS license_category VARCHAR DEFAULT NULL"))
+            conn.execute(text("ALTER TABLE drivers ADD COLUMN IF NOT EXISTS contact_number VARCHAR"))
+            conn.execute(text("ALTER TABLE drivers ADD COLUMN IF NOT EXISTS safety_score FLOAT DEFAULT 100.0"))
+            
+            conn.execute(text("ALTER TABLE trips ADD COLUMN IF NOT EXISTS source VARCHAR"))
+            conn.execute(text("ALTER TABLE trips ADD COLUMN IF NOT EXISTS destination VARCHAR"))
+            conn.execute(text("ALTER TABLE trips ADD COLUMN IF NOT EXISTS cargo_weight FLOAT DEFAULT 0"))
+            conn.execute(text("ALTER TABLE trips ADD COLUMN IF NOT EXISTS planned_distance FLOAT DEFAULT 0"))
+            conn.execute(text("ALTER TABLE trips ADD COLUMN IF NOT EXISTS start_time TIMESTAMP WITH TIME ZONE"))
+            conn.execute(text("ALTER TABLE trips ADD COLUMN IF NOT EXISTS end_time TIMESTAMP WITH TIME ZONE"))
+            conn.execute(text("ALTER TABLE trips ADD COLUMN IF NOT EXISTS route_details VARCHAR"))
+            
+            conn.execute(text("ALTER TABLE expenses ADD COLUMN IF NOT EXISTS liters FLOAT DEFAULT NULL"))
+            
             conn.commit()
         except Exception as e:
-            print("Failed to alter table users:", e)
+            print("Failed to run startup migrations:", e)
     yield
 
 app = FastAPI(

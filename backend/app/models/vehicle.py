@@ -23,9 +23,10 @@ class Vehicle(Base):
     registration_number = Column(String, unique=True, index=True, nullable=False)
     make = Column(String, nullable=False)
     model = Column(String, nullable=False)
-    vehicle_type = Column(Enum(VehicleTypeEnum), default=VehicleTypeEnum.TRUCK, nullable=False)
+    vehicle_type = Column(String, default=VehicleTypeEnum.TRUCK.value, nullable=False)
     capacity = Column(Float, nullable=False) # Max load capacity in kg
     odometer = Column(Float, default=0.0)
     acquisition_cost = Column(Float, default=0.0)
-    status = Column(Enum(VehicleStatusEnum), default=VehicleStatusEnum.AVAILABLE, nullable=False)
+    status = Column(String, default=VehicleStatusEnum.AVAILABLE.value, nullable=False)
+    region = Column(String, default="National", nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

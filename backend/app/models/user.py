@@ -16,8 +16,9 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     name = Column(String, nullable=True) # Full Name
     password_hash = Column(String, nullable=False)
-    role = Column(Enum(RoleEnum), nullable=False)
+    role = Column(String, nullable=False)
     tour_completed = Column(Boolean, default=False)
     is_approved = Column(Boolean, default=False, nullable=True)
     is_admin = Column(Boolean, default=False, nullable=True)
+    requested_role = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

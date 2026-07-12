@@ -13,20 +13,33 @@ from app.models.expense import Expense, ExpenseTypeEnum
 from app.models.maintenance import Maintenance
 from app.api.deps import get_current_user
 from app.models.user import User
+from typing import Optional
 
 router = APIRouter()
 
 @router.get("/dashboard")
 def get_dashboard_stats(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    vehicle_type: Optional[str] = None,
+    status_filter: Optional[str] = None,
+    region: Optional[str] = None
 ):
+    # Apply filters to base Vehicle queries
+    vehicle_query = db.query(Vehicle)
+    if vehicle_type:
+        vehicle_query = vehicle_query.filter(Vehicle.vehicle_type == vehicle_type)
+    if status_filter:
+        vehicle_query = vehicle_query.filter(Vehicle.status == status_filter)
+    if region:
+        vehicle_query = vehicle_query.filter(Vehicle.region == region)
+
     # --- Vehicles ---
-    total_vehicles     = db.query(Vehicle).count()
-    available_vehicles = db.query(Vehicle).filter(Vehicle.status == VehicleStatusEnum.AVAILABLE).count()
-    on_trip_vehicles   = db.query(Vehicle).filter(Vehicle.status == VehicleStatusEnum.ON_TRIP).count()
-    in_shop_vehicles   = db.query(Vehicle).filter(Vehicle.status == VehicleStatusEnum.IN_SHOP).count()
-    retired_vehicles   = db.query(Vehicle).filter(Vehicle.status == VehicleStatusEnum.RETIRED).count()
+    total_vehicles     = vehicle_query.count()
+    available_vehicles = vehicle_query.filter(Vehicle.status == VehicleStatusEnum.AVAILABLE).count()
+    on_trip_vehicles   = vehicle_query.filter(Vehicle.status == VehicleStatusEnum.ON_TRIP).count()
+    in_shop_vehicles   = vehicle_query.filter(Vehicle.status == VehicleStatusEnum.IN_SHOP).count()
+    retired_vehicles   = vehicle_query.filter(Vehicle.status == VehicleStatusEnum.RETIRED).count()
 
     # --- Drivers ---
     total_drivers     = db.query(Driver).count()
@@ -45,6 +58,30 @@ def get_dashboard_stats(
     fuel_cost        = db.query(func.sum(Expense.amount)).filter(Expense.type == ExpenseTypeEnum.FUEL).scalar() or 0.0
     other_expenses   = db.query(func.sum(Expense.amount)).scalar() or 0.0
     total_cost       = maintenance_cost + other_expenses
+
+    # --- Vehicle ROI Calculation ---
+    vehicle_roi_list = []
+    for v in vehicle_query.all():
+        # Get trip revenue
+        v_revenue = db.query(func.sum(Trip.revenue)).filter(Trip.vehicle_id == v.id, Trip.status == TripStatusEnum.COMPLETED).scalar() or 0.0
+        if v_revenue == 0.0:
+            total_dist = db.query(func.sum(Trip.planned_distance)).filter(Trip.vehicle_id == v.id, Trip.status == TripStatusEnum.COMPLETED).scalar() or 0.0
+            v_revenue = total_dist * 2.5 # $2.5 per km estimate
+            
+        v_maintenance = db.query(func.sum(Maintenance.cost)).filter(Maintenance.vehicle_id == v.id).scalar() or 0.0
+        v_fuel = db.query(func.sum(Expense.amount)).filter(Expense.vehicle_id == v.id, Expense.type == ExpenseTypeEnum.FUEL).scalar() or 0.0
+        
+        acq_cost = v.acquisition_cost if v.acquisition_cost and v.acquisition_cost > 0 else 40000.0
+        roi = (v_revenue - (v_maintenance + v_fuel)) / acq_cost
+        vehicle_roi_list.append({
+            "id": v.id,
+            "registration": v.registration_number,
+            "make": v.make,
+            "model": v.model,
+            "roi": f"{round(roi * 100, 1)}%",
+            "roi_numeric": roi
+        })
+    vehicle_roi_list = sorted(vehicle_roi_list, key=lambda x: x["roi_numeric"], reverse=True)[:5]
 
     # --- Fuel efficiency ---
     total_liters   = db.query(func.sum(Expense.liters)).filter(Expense.type == ExpenseTypeEnum.FUEL).scalar() or 0.0
@@ -138,6 +175,7 @@ def get_dashboard_stats(
         "expense_breakdown": expense_breakdown,
         "monthly_trip_trend": monthly_trend,
         "recent_activity": recent_activity,
+        "vehicle_roi": vehicle_roi_list,
     }
 
 

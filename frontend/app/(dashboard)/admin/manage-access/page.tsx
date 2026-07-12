@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, ShieldAlert, Trash2, Check, X, RefreshCw } from "lucide-react";
+import { Search, ShieldAlert, Trash2, Check, X, RefreshCw, ArrowRight, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 export default function ManageAccessPage() {
@@ -26,7 +26,7 @@ export default function ManageAccessPage() {
     // Let's add getUsers to api.ts or write it inline. Writing it inline or updating api.ts is great.
     // Let's check what we can write inline:
     queryFn: async () => {
-      const token = localStorage.getItem("access_token");
+      const token = sessionStorage.getItem("access_token");
       const res = await fetch("http://localhost:8000/api/v1/users/", {
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -41,7 +41,7 @@ export default function ManageAccessPage() {
   // Mutations
   const approveMutation = useMutation({
     mutationFn: async (userId: number) => {
-      const token = localStorage.getItem("access_token");
+      const token = sessionStorage.getItem("access_token");
       const res = await fetch(`http://localhost:8000/api/v1/users/${userId}/approve`, {
         method: "PUT",
         headers: {
@@ -63,7 +63,7 @@ export default function ManageAccessPage() {
 
   const rejectMutation = useMutation({
     mutationFn: async (userId: number) => {
-      const token = localStorage.getItem("access_token");
+      const token = sessionStorage.getItem("access_token");
       const res = await fetch(`http://localhost:8000/api/v1/users/${userId}/reject`, {
         method: "PUT",
         headers: {
@@ -82,7 +82,7 @@ export default function ManageAccessPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async (userId: number) => {
-      const token = localStorage.getItem("access_token");
+      const token = sessionStorage.getItem("access_token");
       const res = await fetch(`http://localhost:8000/api/v1/users/${userId}`, {
         method: "DELETE",
         headers: {
@@ -96,6 +96,28 @@ export default function ManageAccessPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["usersList"] });
       toast.success("User account deleted successfully.");
+    }
+  });
+
+  const approveRoleUpgradeMutation = useMutation({
+    mutationFn: async (userId: number) => {
+      const token = sessionStorage.getItem("access_token");
+      const res = await fetch(`http://localhost:8000/api/v1/users/${userId}/approve-role`, {
+        method: "PUT",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        }
+      });
+      if (!res.ok) throw new Error("Failed to approve role upgrade");
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["usersList"] });
+      toast.success(`Upgraded ${data.name || data.email} to ${data.role}!`);
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to upgrade user role");
     }
   });
 
@@ -276,9 +298,16 @@ export default function ManageAccessPage() {
 
                   {/* Role Badge */}
                   <td className="p-4">
-                    <Badge variant="outline" className={`font-semibold text-[10px] uppercase tracking-wider rounded-md ${getRoleBadgeColor(item.role)}`}>
-                      {item.role}
-                    </Badge>
+                    <div className="flex flex-col gap-1 items-start">
+                      <Badge variant="outline" className={`font-semibold text-[10px] uppercase tracking-wider rounded-md ${getRoleBadgeColor(item.role)}`}>
+                        {item.role}
+                      </Badge>
+                      {item.requested_role && (
+                        <div className="flex items-center gap-1 text-[9px] text-indigo-600 font-bold uppercase tracking-wider">
+                          <ArrowRight className="w-2.5 h-2.5" /> Requested: {item.requested_role}
+                        </div>
+                      )}
+                    </div>
                   </td>
 
                   {/* Status */}
@@ -306,6 +335,15 @@ export default function ManageAccessPage() {
                   {/* Actions */}
                   <td className="p-4 pr-6 text-right">
                     <div className="flex justify-end gap-2">
+                      {item.requested_role && (
+                        <Button
+                          size="sm"
+                          onClick={() => approveRoleUpgradeMutation.mutate(item.id)}
+                          className="h-8 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs rounded-full px-3.5 flex items-center gap-1"
+                        >
+                          <Sparkles className="w-3.5 h-3.5" /> Approve Upgrade
+                        </Button>
+                      )}
                       {!item.is_approved && !item.is_admin && (
                         <Button
                           size="sm"

@@ -16,6 +16,7 @@ class UserResponse(UserBase):
     tour_completed: bool
     is_approved: bool | None = False
     is_admin: bool | None = False
+    requested_role: RoleEnum | None = None
 
     class Config:
         from_attributes = True

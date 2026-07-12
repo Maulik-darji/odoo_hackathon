@@ -12,6 +12,7 @@ class VehicleBase(BaseModel):
     odometer: Optional[float] = 0.0
     acquisition_cost: Optional[float] = 0.0
     status: Optional[VehicleStatusEnum] = VehicleStatusEnum.AVAILABLE
+    region: Optional[str] = "National"
 
 class VehicleCreate(VehicleBase):
     pass
@@ -25,6 +26,7 @@ class VehicleUpdate(BaseModel):
     odometer: Optional[float] = None
     acquisition_cost: Optional[float] = None
     status: Optional[VehicleStatusEnum] = None
+    region: Optional[str] = None
 
 class VehicleResponse(VehicleBase):
     id: int

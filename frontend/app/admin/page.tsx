@@ -20,8 +20,8 @@ export default function AdminLoginPage() {
     setError("");
 
     if (email === ADMIN_EMAIL && code === ADMIN_CODE) {
-      localStorage.setItem("access_token", "admin-hardcoded-token");
-      localStorage.setItem("user", JSON.stringify({
+      sessionStorage.setItem("access_token", "admin-hardcoded-token");
+      sessionStorage.setItem("user", JSON.stringify({
         id: 0,
         email: ADMIN_EMAIL,
         name: "Admin",
@@ -29,7 +29,7 @@ export default function AdminLoginPage() {
         is_admin: true,
         is_approved: true,
       }));
-      localStorage.setItem("userRole", "Fleet Manager");
+      sessionStorage.setItem("userRole", "Fleet Manager");
       router.push("/manage-access");
     } else {
       setError("Invalid credentials");

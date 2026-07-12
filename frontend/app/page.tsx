@@ -5,13 +5,14 @@ export default function Home() {
     <div className="landing-page">
       {/* Navbar */}
       <header className="landing-nav">
-        <div className="nav-logo">
+        <Link href="/" className="nav-logo">
           <div className="logo-icon">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
             </svg>
           </div>
-        </div>
+          <span className="logo-text">TransitOps</span>
+        </Link>
 
         <nav className="nav-pill">
           <a href="#platform" className="nav-link">Platform</a>
@@ -19,11 +20,10 @@ export default function Home() {
           <a href="#workflow" className="nav-link">Workflow</a>
           <a href="#industries" className="nav-link">Industries</a>
           <a href="#faq" className="nav-link">FAQ</a>
-          <Link href="/register" className="nav-cta">Get started <span className="arrow">↗</span></Link>
         </nav>
 
         <div className="nav-right">
-          <Link href="/login" className="sign-in-link">Sign in</Link>
+          <Link href="/login" className="sign-in-btn">Sign in</Link>
         </div>
       </header>
 

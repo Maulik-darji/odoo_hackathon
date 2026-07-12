@@ -22,8 +22,9 @@ class Trip(Base):
     planned_distance = Column(Float, default=0.0) # in km
     start_time = Column(DateTime(timezone=True), nullable=False)
     end_time = Column(DateTime(timezone=True), nullable=True)
-    status = Column(Enum(TripStatusEnum), default=TripStatusEnum.DRAFT, nullable=False)
+    status = Column(String, default=TripStatusEnum.DRAFT.value, nullable=False)
     route_details = Column(String, nullable=True) # additional notes
+    revenue = Column(Float, default=0.0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     vehicle = relationship("Vehicle")
