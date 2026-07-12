@@ -31,10 +31,15 @@ def seed_database():
         
         users = []
         for i in range(20):
+            name = fake.name()
+            # Clean name for email: remove titles like Dr., Mr. and make lowercase
+            clean_name = name.lower().replace("dr. ", "").replace("mr. ", "").replace("mrs. ", "").replace("ms. ", "").replace("miss ", "")
+            email_prefix = clean_name.replace(" ", ".").replace("'", "")
+            
             user = User(
-                email=f"user{i+1}_{fake.user_name()}@transitops.com",
+                email=f"{email_prefix}@transitops.com",
                 password_hash=hashed_password,
-                name=fake.name(),
+                name=name,
                 role=random.choice(roles),
                 tour_completed=True,
                 is_approved=True,
