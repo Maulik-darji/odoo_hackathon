@@ -120,6 +120,15 @@ def seed_database():
             status = random.choice(list(TripStatusEnum)).value
             end_time = start_time + timedelta(hours=random.randint(2, 48)) if status == "Completed" else None
             
+            route_details = random.choice([
+                "NH48 Express Route - Smooth transit",
+                "State Highway 12 - Heavy traffic detour",
+                "Direct route via National Highway",
+                "Night transit route - well lit",
+                "Route adjusted for weather conditions",
+                "Alternate bypass route taken"
+            ])
+            
             trip = Trip(
                 vehicle_id=random.choice(vehicles).id,
                 driver_id=random.choice(drivers).id,
@@ -130,7 +139,7 @@ def seed_database():
                 start_time=start_time,
                 end_time=end_time,
                 status=status,
-                route_details=fake.sentence(),
+                route_details=route_details,
                 revenue=random.uniform(1000, 8000)
             )
             db.add(trip)
@@ -146,12 +155,23 @@ def seed_database():
             status = random.choice(list(MaintenanceStatusEnum)).value
             end_date = start_date + timedelta(days=random.randint(1, 10)) if status == "Completed" else None
             
+            description = random.choice([
+                "Routine Oil Change & Filter Replacement",
+                "Engine diagnostics and tune-up",
+                "Brake pads replacement and rotor check",
+                "Tire rotation and wheel alignment",
+                "AC servicing and cabin filter check",
+                "Transmission fluid flush",
+                "Suspension check and shocks replacement",
+                "Battery replacement and electrical check"
+            ])
+            
             log = Maintenance(
                 vehicle_id=random.choice(vehicles).id,
                 start_date=start_date,
                 end_date=end_date,
                 status=status,
-                description=fake.sentence(),
+                description=description,
                 cost=random.uniform(100, 2500)
             )
             db.add(log)
@@ -163,6 +183,15 @@ def seed_database():
             amount = random.uniform(20, 800)
             liters = random.uniform(50, 400) if exp_type == ExpenseTypeEnum.FUEL else None
             
+            if exp_type == ExpenseTypeEnum.FUEL:
+                desc = f"Fuel Refill - {random.choice(['Bharat Petroleum', 'Indian Oil', 'HP Value', 'Reliance Petroleum'])}"
+            elif exp_type == ExpenseTypeEnum.TOLL:
+                desc = f"Highway Toll Tax - {random.choice(['NH48 Toll Plaza', 'Yamuna Expressway', 'FASTag Online'])}"
+            elif exp_type == ExpenseTypeEnum.MAINTENANCE:
+                desc = f"Quick Maintenance - {random.choice(['Oil top-up', 'Wiper change', 'Tire inflation check'])}"
+            else:
+                desc = random.choice(["Driver Meals Allowance", "Parking Fees - City Depot", "State Border Permit Tax"])
+            
             expense = Expense(
                 type=exp_type,
                 amount=amount,
@@ -170,7 +199,7 @@ def seed_database():
                 date=fake.date_time_between(start_date='-30d', end_date='now', tzinfo=timezone.utc),
                 vehicle_id=random.choice(vehicles).id,
                 trip_id=random.choice(trips).id if random.choice([True, False]) else None,
-                description=fake.sentence()
+                description=desc
             )
             db.add(expense)
             
