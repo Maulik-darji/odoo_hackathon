@@ -6,6 +6,7 @@ from app.models.expense import ExpenseTypeEnum
 class ExpenseBase(BaseModel):
     type: ExpenseTypeEnum
     amount: float
+    liters: Optional[float] = None
     date: datetime
     vehicle_id: Optional[int] = None
     trip_id: Optional[int] = None
@@ -17,6 +18,7 @@ class ExpenseCreate(ExpenseBase):
 class ExpenseUpdate(BaseModel):
     type: Optional[ExpenseTypeEnum] = None
     amount: Optional[float] = None
+    liters: Optional[float] = None
     date: Optional[datetime] = None
     vehicle_id: Optional[int] = None
     trip_id: Optional[int] = None

@@ -11,7 +11,45 @@ from jose import jwt, JWTError
 
 from app.api.deps import get_current_user
 
+import random
+from pydantic import BaseModel, EmailStr
+
 router = APIRouter()
+
+# In-memory OTP store
+otp_store = {}
+
+class SendOTPRequest(BaseModel):
+    email: EmailStr
+
+class VerifyOTPRequest(BaseModel):
+    email: EmailStr
+    otp: str
+
+from app.core.email import send_verification_email
+
+@router.post("/send-otp")
+async def send_otp(request_in: SendOTPRequest):
+    otp = f"{random.randint(100000, 999999)}"
+    otp_store[request_in.email] = otp
+    print("\n" + "="*50)
+    print(f"OTP FOR {request_in.email}: {otp}")
+    print("="*50 + "\n")
+    
+    # Send actual email using the async mailer helper
+    await send_verification_email(request_in.email, otp)
+    
+    return {"message": "OTP sent successfully", "otp": otp}
+
+@router.post("/verify-otp")
+def verify_otp(request_in: VerifyOTPRequest):
+    saved_otp = otp_store.get(request_in.email)
+    if not saved_otp or saved_otp != request_in.otp:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired OTP"
+        )
+    return {"message": "OTP verified successfully"}
 
 @router.post("/register", response_model=UserResponse)
 def register(user_in: UserCreate, db: Session = Depends(get_db)):

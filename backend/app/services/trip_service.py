@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -49,6 +51,7 @@ def _validate_trip_rules(
     vehicle = _get_vehicle_or_404(db, vehicle_id)
     driver = _get_driver_or_404(db, driver_id)
 
+    # Rule: Cargo Weight must not exceed the vehicle's maximum load capacity
     if cargo_weight > vehicle.capacity:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -61,32 +64,49 @@ def _validate_trip_rules(
             detail="Trip end time must be after the start time.",
         )
 
-    if status_value in {TripStatusEnum.PLANNED, TripStatusEnum.IN_PROGRESS}:
-        if vehicle.status != VehicleStatusEnum.ACTIVE:
+    # Rule: Drivers with expired licenses cannot be assigned to trips
+    now = datetime.now(driver.license_expiry.tzinfo or timezone.utc)
+    if driver.license_expiry <= now:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot assign a driver with an expired license to a trip.",
+        )
+
+    # Rule: Suspended drivers cannot be assigned to trips
+    if driver.status == DriverStatusEnum.SUSPENDED:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Suspended drivers cannot be assigned to trips.",
+        )
+
+    # Rule: Retired or In Shop vehicles must never appear in the dispatch selection
+    if status_value in {TripStatusEnum.DRAFT, TripStatusEnum.DISPATCHED}:
+        if vehicle.status not in {VehicleStatusEnum.AVAILABLE}:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Only active vehicles can be assigned to planned or in-progress trips.",
+                detail=f"Only available vehicles can be assigned to trips. Current status: {vehicle.status.value}",
             )
-        if driver.status != DriverStatusEnum.ACTIVE:
+        if driver.status not in {DriverStatusEnum.AVAILABLE}:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Only active drivers can be assigned to planned or in-progress trips.",
+                detail=f"Only available drivers can be assigned to trips. Current status: {driver.status.value}",
             )
 
-    if status_value == TripStatusEnum.IN_PROGRESS:
-        active_trips = db.query(Trip).filter(Trip.status == TripStatusEnum.IN_PROGRESS).all()
+    # Rule: A driver or vehicle already marked On Trip cannot be assigned to another trip
+    if status_value == TripStatusEnum.DISPATCHED:
+        active_trips = db.query(Trip).filter(Trip.status == TripStatusEnum.DISPATCHED).all()
         for active_trip in active_trips:
             if exclude_trip_id is not None and active_trip.id == exclude_trip_id:
                 continue
             if active_trip.vehicle_id == vehicle_id:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="This vehicle is already assigned to an in-progress trip.",
+                    detail="This vehicle is already assigned to a dispatched trip.",
                 )
             if active_trip.driver_id == driver_id:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="This driver is already assigned to an in-progress trip.",
+                    detail="This driver is already assigned to a dispatched trip.",
                 )
 
     if status_value == TripStatusEnum.COMPLETED and end_time is None:
@@ -94,6 +114,27 @@ def _validate_trip_rules(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Completed trips require an end time.",
         )
+
+
+def _apply_status_transitions(db: Session, trip: Trip, old_status: TripStatusEnum | None, new_status: TripStatusEnum) -> None:
+    """Automatically update vehicle and driver statuses based on trip lifecycle transitions."""
+    vehicle = _get_vehicle_or_404(db, trip.vehicle_id)
+    driver = _get_driver_or_404(db, trip.driver_id)
+
+    # Rule: Dispatching a trip → vehicle and driver become On Trip
+    if new_status == TripStatusEnum.DISPATCHED and old_status != TripStatusEnum.DISPATCHED:
+        vehicle.status = VehicleStatusEnum.ON_TRIP
+        driver.status = DriverStatusEnum.ON_TRIP
+
+    # Rule: Completing a trip → vehicle and driver become Available
+    elif new_status == TripStatusEnum.COMPLETED and old_status != TripStatusEnum.COMPLETED:
+        vehicle.status = VehicleStatusEnum.AVAILABLE
+        driver.status = DriverStatusEnum.AVAILABLE
+
+    # Rule: Cancelling a dispatched trip → vehicle and driver become Available
+    elif new_status == TripStatusEnum.CANCELLED and old_status == TripStatusEnum.DISPATCHED:
+        vehicle.status = VehicleStatusEnum.AVAILABLE
+        driver.status = DriverStatusEnum.AVAILABLE
 
 
 def create_trip(db: Session, trip_in: TripCreate) -> Trip:
@@ -109,6 +150,11 @@ def create_trip(db: Session, trip_in: TripCreate) -> Trip:
 
     db_trip = Trip(**trip_in.model_dump())
     db.add(db_trip)
+    db.flush()
+
+    # Apply automatic status transitions
+    _apply_status_transitions(db, db_trip, None, db_trip.status)
+
     db.commit()
     db.refresh(db_trip)
     return db_trip
@@ -122,6 +168,7 @@ def update_trip(db: Session, trip_id: int, trip_in: TripUpdate) -> Trip:
             detail="Trip not found.",
         )
 
+    old_status = db_trip.status
     update_data = trip_in.model_dump(exclude_unset=True)
     candidate = {
         "vehicle_id": update_data.get("vehicle_id", db_trip.vehicle_id),
@@ -137,6 +184,10 @@ def update_trip(db: Session, trip_id: int, trip_in: TripUpdate) -> Trip:
     for key, value in update_data.items():
         setattr(db_trip, key, value)
 
+    # Apply automatic status transitions
+    new_status = db_trip.status
+    _apply_status_transitions(db, db_trip, old_status, new_status)
+
     db.commit()
     db.refresh(db_trip)
     return db_trip
@@ -149,6 +200,13 @@ def delete_trip(db: Session, trip_id: int) -> Trip:
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Trip not found.",
         )
+
+    # If we're deleting a dispatched trip, restore vehicle and driver to Available
+    if db_trip.status == TripStatusEnum.DISPATCHED:
+        vehicle = _get_vehicle_or_404(db, db_trip.vehicle_id)
+        driver = _get_driver_or_404(db, db_trip.driver_id)
+        vehicle.status = VehicleStatusEnum.AVAILABLE
+        driver.status = DriverStatusEnum.AVAILABLE
 
     db.delete(db_trip)
     db.commit()

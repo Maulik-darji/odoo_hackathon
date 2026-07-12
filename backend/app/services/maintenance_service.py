@@ -28,10 +28,12 @@ def _sync_vehicle_status(db: Session, vehicle_id: int, maint_status: Maintenance
     """Automatically toggle the vehicle status based on maintenance lifecycle."""
     vehicle = _get_vehicle_or_404(db, vehicle_id)
 
+    # Rule: Creating maintenance → vehicle status becomes In Shop
     if maint_status in {MaintenanceStatusEnum.SCHEDULED, MaintenanceStatusEnum.IN_PROGRESS}:
         vehicle.status = VehicleStatusEnum.IN_SHOP
     elif maint_status == MaintenanceStatusEnum.COMPLETED:
-        # Only flip back to Active if there are no other open maintenance records
+        # Rule: Closing maintenance restores to Available (unless retired)
+        # Only flip back if there are no other open maintenance records
         open_count = (
             db.query(Maintenance)
             .filter(
@@ -43,8 +45,8 @@ def _sync_vehicle_status(db: Session, vehicle_id: int, maint_status: Maintenance
             )
             .count()
         )
-        if open_count == 0:
-            vehicle.status = VehicleStatusEnum.ACTIVE
+        if open_count == 0 and vehicle.status != VehicleStatusEnum.RETIRED:
+            vehicle.status = VehicleStatusEnum.AVAILABLE
 
 
 def create_maintenance(db: Session, maint_in: MaintenanceCreate) -> Maintenance:
@@ -111,7 +113,7 @@ def delete_maintenance(db: Session, maintenance_id: int) -> Maintenance:
     db.delete(db_maint)
     db.flush()
 
-    # After deleting, check if the vehicle should be set back to Active
+    # After deleting, check if the vehicle should be set back to Available
     open_count = (
         db.query(Maintenance)
         .filter(
@@ -126,7 +128,7 @@ def delete_maintenance(db: Session, maintenance_id: int) -> Maintenance:
     if open_count == 0:
         vehicle = db.query(Vehicle).filter(Vehicle.id == vehicle_id).first()
         if vehicle and vehicle.status == VehicleStatusEnum.IN_SHOP:
-            vehicle.status = VehicleStatusEnum.ACTIVE
+            vehicle.status = VehicleStatusEnum.AVAILABLE
 
     db.commit()
     return db_maint

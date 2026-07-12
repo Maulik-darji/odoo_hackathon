@@ -14,6 +14,8 @@ class UserResponse(UserBase):
     id: int
     created_at: datetime
     tour_completed: bool
+    is_approved: bool | None = False
+    is_admin: bool | None = False
 
     class Config:
         from_attributes = True

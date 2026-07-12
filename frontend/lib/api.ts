@@ -17,6 +17,8 @@ export interface UserResponse {
   name: string | null;
   role: string;
   tour_completed: boolean;
+  is_approved?: boolean;
+  is_admin?: boolean;
   created_at: string;
 }
 
@@ -135,6 +137,20 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 
 export const api = {
   // Auth
+  sendOtp: async (email: string): Promise<{ message: string; otp: string }> => {
+    return request<{ message: string; otp: string }>("/auth/send-otp", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    });
+  },
+
+  verifyOtp: async (email: string, otp: string): Promise<{ message: string }> => {
+    return request<{ message: string }>("/auth/verify-otp", {
+      method: "POST",
+      body: JSON.stringify({ email, otp }),
+    });
+  },
+
   register: async (name: string, email: string, password: string, role: string = "Fleet Manager"): Promise<UserResponse> => {
     return request<UserResponse>("/auth/register", {
       method: "POST",

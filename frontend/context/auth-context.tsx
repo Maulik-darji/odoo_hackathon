@@ -10,8 +10,8 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
-  login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, role?: string) => Promise<void>;
+  register: (name: string, email: string, password: string, role?: string) => Promise<void>;
   logout: () => void;
   clearError: () => void;
 }
@@ -49,7 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     initializeAuth();
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, role?: string) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -60,18 +60,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Store in cookies for middleware route protection
       document.cookie = `access_token=${tokens.access_token}; path=/; max-age=1800; SameSite=Lax`;
       
-      const payload = JSON.parse(atob(tokens.access_token.split(".")[1]));
-      const mockUser: UserResponse = {
-        id: 1,
-        email: payload.sub,
-        name: email.split("@")[0],
-        role: "Fleet Manager",
-        tour_completed: false,
-        created_at: new Date().toISOString(),
-      };
+      const userDetails = await api.getMe();
       
-      localStorage.setItem("user", JSON.stringify(mockUser));
-      setUser(mockUser);
+      localStorage.setItem("user", JSON.stringify(userDetails));
+      setUser(userDetails);
       router.push("/dashboard");
     } catch (err: any) {
       setError(err.message || "Failed to log in");
@@ -81,12 +73,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const register = async (name: string, email: string, password: string) => {
+  const register = async (name: string, email: string, password: string, role?: string) => {
     setIsLoading(true);
     setError(null);
     try {
-      const newUser = await api.register(name, email, password, "Fleet Manager");
-      await login(email, password);
+      const newUser = await api.register(name, email, password, role || "Fleet Manager");
+      await login(email, password, role);
     } catch (err: any) {
       setError(err.message || "Failed to register account");
       throw err;

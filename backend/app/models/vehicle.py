@@ -3,8 +3,16 @@ from sqlalchemy.sql import func
 import enum
 from app.db.database import Base
 
+class VehicleTypeEnum(str, enum.Enum):
+    TRUCK = "Truck"
+    VAN = "Van"
+    BUS = "Bus"
+    CAR = "Car"
+    TRAILER = "Trailer"
+
 class VehicleStatusEnum(str, enum.Enum):
-    ACTIVE = "Active"
+    AVAILABLE = "Available"
+    ON_TRIP = "On Trip"
     IN_SHOP = "In Shop"
     RETIRED = "Retired"
 
@@ -15,7 +23,9 @@ class Vehicle(Base):
     registration_number = Column(String, unique=True, index=True, nullable=False)
     make = Column(String, nullable=False)
     model = Column(String, nullable=False)
-    capacity = Column(Float, nullable=False) # e.g. cargo capacity in kg/tons
-    status = Column(Enum(VehicleStatusEnum), default=VehicleStatusEnum.ACTIVE, nullable=False)
-    mileage = Column(Float, default=0.0)
+    vehicle_type = Column(Enum(VehicleTypeEnum), default=VehicleTypeEnum.TRUCK, nullable=False)
+    capacity = Column(Float, nullable=False) # Max load capacity in kg
+    odometer = Column(Float, default=0.0)
+    acquisition_cost = Column(Float, default=0.0)
+    status = Column(Enum(VehicleStatusEnum), default=VehicleStatusEnum.AVAILABLE, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

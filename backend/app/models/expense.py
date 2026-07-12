@@ -16,6 +16,7 @@ class Expense(Base):
     id = Column(Integer, primary_key=True, index=True)
     type = Column(Enum(ExpenseTypeEnum), nullable=False)
     amount = Column(Float, nullable=False)
+    liters = Column(Float, nullable=True) # fuel quantity in liters (for Fuel type)
     date = Column(DateTime(timezone=True), nullable=False)
     vehicle_id = Column(Integer, ForeignKey("vehicles.id"), nullable=True)
     trip_id = Column(Integer, ForeignKey("trips.id"), nullable=True)

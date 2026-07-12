@@ -1,15 +1,17 @@
 from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
-from app.models.vehicle import VehicleStatusEnum
+from app.models.vehicle import VehicleStatusEnum, VehicleTypeEnum
 
 class VehicleBase(BaseModel):
     registration_number: str
     make: str
     model: str
+    vehicle_type: Optional[VehicleTypeEnum] = VehicleTypeEnum.TRUCK
     capacity: float
-    status: Optional[VehicleStatusEnum] = VehicleStatusEnum.ACTIVE
-    mileage: Optional[float] = 0.0
+    odometer: Optional[float] = 0.0
+    acquisition_cost: Optional[float] = 0.0
+    status: Optional[VehicleStatusEnum] = VehicleStatusEnum.AVAILABLE
 
 class VehicleCreate(VehicleBase):
     pass
@@ -18,9 +20,11 @@ class VehicleUpdate(BaseModel):
     registration_number: Optional[str] = None
     make: Optional[str] = None
     model: Optional[str] = None
+    vehicle_type: Optional[VehicleTypeEnum] = None
     capacity: Optional[float] = None
+    odometer: Optional[float] = None
+    acquisition_cost: Optional[float] = None
     status: Optional[VehicleStatusEnum] = None
-    mileage: Optional[float] = None
 
 class VehicleResponse(VehicleBase):
     id: int

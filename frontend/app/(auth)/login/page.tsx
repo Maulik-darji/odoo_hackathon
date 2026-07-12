@@ -22,6 +22,7 @@ import { Eye, EyeOff } from "lucide-react";
 const loginSchema = zod.object({
   email: zod.string().email({ message: "Please enter a valid email address" }),
   password: zod.string().min(1, { message: "Password is required" }),
+  role: zod.enum(["Fleet Manager", "Dispatcher", "Safety Officer", "Financial Analyst"]),
 });
 
 type LoginFormValues = zod.infer<typeof loginSchema>;
@@ -38,6 +39,9 @@ export default function LoginPage() {
     formState: { errors },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
+    defaultValues: {
+      role: "Dispatcher",
+    }
   });
 
   const onSubmit = async (data: LoginFormValues) => {
@@ -45,7 +49,7 @@ export default function LoginPage() {
     setSubmitError(null);
     clearError();
     try {
-      await login(data.email, data.password);
+      await login(data.email, data.password, data.role);
     } catch (err: any) {
       setSubmitError(err.message || "Invalid email or password");
     } finally {
@@ -54,15 +58,17 @@ export default function LoginPage() {
   };
 
   return (
-    <Card className="w-full max-w-md shadow-sm border-slate-200">
-      <CardHeader className="space-y-1 text-center">
-        <CardTitle className="text-2xl tracking-tight font-semibold">Welcome back</CardTitle>
-        <CardDescription className="text-slate-500">
+    <Card className="w-full shadow-[0_20px_40px_rgba(0,0,0,0.04)] border-white/40 bg-white/70 backdrop-blur-xl rounded-2xl">
+      <CardHeader className="space-y-2 text-center pb-8 pt-8">
+        <CardTitle className="text-4xl tracking-tight font-normal">
+          <span className="serif-italic">Welcome</span> back
+        </CardTitle>
+        <CardDescription className="text-slate-500 text-base">
           Enter your email and password to access your account
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-5 px-8">
           {/* Display general errors */}
           {(submitError || error) && (
             <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg border border-red-100 font-medium">
@@ -70,13 +76,13 @@ export default function LoginPage() {
             </div>
           )}
 
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+          <div className="space-y-2.5">
+            <Label htmlFor="email" className="text-sm font-semibold text-slate-700 uppercase tracking-wide text-xs">Email</Label>
             <Input
               id="email"
               type="email"
               placeholder="m@example.com"
-              className="h-11"
+              className="h-12 bg-white/80 border-slate-200/60 focus-visible:ring-blue-500"
               {...register("email")}
             />
             {errors.email && (
@@ -84,10 +90,10 @@ export default function LoginPage() {
             )}
           </div>
           
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             <div className="flex items-center justify-between">
-              <Label htmlFor="password">Password</Label>
-              <Link href="/forgot-password" className="text-sm font-medium text-slate-600 hover:text-slate-900">
+              <Label htmlFor="password" className="text-sm font-semibold text-slate-700 uppercase tracking-wide text-xs">Password</Label>
+              <Link href="/forgot-password" className="text-xs font-medium text-slate-500 hover:text-slate-900 transition-colors">
                 Forgot password?
               </Link>
             </div>
@@ -95,7 +101,7 @@ export default function LoginPage() {
               <Input
                 id="password"
                 type={showPassword ? "text" : "password"}
-                className="h-11 pr-10"
+                className="h-12 pr-10 bg-white/80 border-slate-200/60 focus-visible:ring-blue-500"
                 {...register("password")}
               />
               <button
@@ -110,18 +116,48 @@ export default function LoginPage() {
               <p className="text-xs font-semibold text-red-500">{errors.password.message}</p>
             )}
           </div>
+
+          {/* Role selector functionality as requested */}
+          <div className="space-y-2.5">
+            <Label htmlFor="role" className="text-sm font-semibold text-slate-700 uppercase tracking-wide text-xs">ROLE (RBAC)</Label>
+            <select
+              id="role"
+              className="w-full h-12 px-3 rounded-lg border border-slate-200/60 bg-white/80 focus-visible:ring-blue-500 text-sm focus:outline-none"
+              {...register("role")}
+            >
+              <option value="Fleet Manager">Fleet Manager</option>
+              <option value="Dispatcher">Dispatcher</option>
+              <option value="Safety Officer">Safety Officer</option>
+              <option value="Financial Analyst">Financial Analyst</option>
+            </select>
+            {errors.role && (
+              <p className="text-xs font-semibold text-red-500">{errors.role.message}</p>
+            )}
+          </div>
         </CardContent>
-        <CardFooter className="flex flex-col space-y-4">
+        <CardFooter className="flex flex-col space-y-6 pb-8 px-8 pt-4">
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="w-full h-11 bg-slate-900 hover:bg-slate-800 text-white font-medium disabled:opacity-50"
+            className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white font-medium rounded-full disabled:opacity-50 transition-transform active:scale-[0.98]"
           >
             {isSubmitting ? "Signing in..." : "Sign in"}
           </Button>
-          <div className="text-sm text-center text-slate-500 font-medium">
+
+          {/* Scoped role access summary */}
+          <div className="w-full pt-4 border-t border-slate-100 text-left">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Access is scoped by role after login:</p>
+            <ul className="text-xs text-slate-500 space-y-1 font-medium list-disc pl-4">
+              <li>Fleet Manager → Fleet, Maintenance</li>
+              <li>Dispatcher → Dashboard, Trips</li>
+              <li>Safety Officer → Drivers, Compliance</li>
+              <li>Financial Analyst → Fuel & Expenses, Analytics</li>
+            </ul>
+          </div>
+
+          <div className="text-sm text-center text-slate-500">
             Don't have an account?{" "}
-            <Link href="/register" className="text-slate-900 hover:underline">
+            <Link href="/register" className="text-slate-900 font-medium hover:underline">
               Get started
             </Link>
           </div>
