@@ -1,4 +1,12 @@
-const API_BASE_URL = "http://localhost:8000/api/v1";
+const getApiBaseUrl = () => {
+  if (typeof window !== "undefined") {
+    const hostname = window.location.hostname;
+    return `http://${hostname}:8000/api/v1`;
+  }
+  return "http://localhost:8000/api/v1";
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 export interface UserResponse {
   id: number;
