@@ -75,3 +75,12 @@ def refresh_token(token_in: dict, db: Session = Depends(get_db)):
 @router.get("/me", response_model=UserResponse)
 def get_me(current_user: UserResponse = Depends(get_current_user)):
     return current_user
+
+@router.put("/tour", response_model=UserResponse)
+def complete_tour(db: Session = Depends(get_db), current_user: UserResponse = Depends(get_current_user)):
+    user = get_user_by_email(db, current_user.email)
+    if user:
+        user.tour_completed = True
+        db.commit()
+        db.refresh(user)
+    return user

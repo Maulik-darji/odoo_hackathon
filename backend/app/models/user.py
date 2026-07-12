@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Enum
+from sqlalchemy import Column, Integer, String, DateTime, Enum, Boolean
 from sqlalchemy.sql import func
 import enum
 from app.db.database import Base
@@ -17,4 +17,5 @@ class User(Base):
     name = Column(String, nullable=True) # Full Name
     password_hash = Column(String, nullable=False)
     role = Column(Enum(RoleEnum), nullable=False)
+    tour_completed = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
