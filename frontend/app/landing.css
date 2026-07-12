@@ -42,24 +42,33 @@
 /* Navigation */
 .landing-nav {
   position: fixed;
-  top: 1.5rem;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 0;
+  left: 0;
+  right: 0;
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
-  gap: 1.5rem;
-  padding: 0.6rem 1.25rem 0.6rem 1.5rem;
+  padding: 1.5rem 4rem;
   z-index: 100;
-  background: rgba(245, 244, 237, 0.7);
-  backdrop-filter: blur(28px) saturate(180%);
-  -webkit-backdrop-filter: blur(28px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  border-radius: 100px;
-  box-shadow:
-    0 20px 40px rgba(0, 0, 0, 0.06),
-    0 1px 3px rgba(0, 0, 0, 0.02),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  pointer-events: none;
+}
+
+.nav-logo, .nav-pill, .nav-right {
+  pointer-events: auto;
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+}
+
+.logo-text {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.03em;
 }
 
 .logo-icon {
@@ -75,7 +84,19 @@
 .nav-pill {
   display: flex;
   align-items: center;
-  gap: 0;
+  gap: 0.25rem;
+  padding: 0.35rem 0.5rem;
+  background: rgba(245, 244, 237, 0.7);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 100px;
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.06),
+    0 1px 3px rgba(0, 0, 0, 0.02),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
 }
 
 .nav-link {
@@ -92,25 +113,24 @@
   background: rgba(0,0,0,0.03);
 }
 
-.nav-cta {
-  background: var(--text-primary);
-  color: white;
-  padding: 0.5rem 1.25rem;
+.nav-right .sign-in-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #0f172a;
+  color: #ffffff;
+  padding: 0.6rem 1.5rem;
   border-radius: 100px;
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
   text-decoration: none;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  margin-left: 0.5rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
 }
 
-.sign-in-link {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-primary);
-  text-decoration: none;
+.nav-right .sign-in-btn:hover {
+  background: #1e293b;
+  transform: translateY(-1px);
 }
 
 /* Hero Section */
