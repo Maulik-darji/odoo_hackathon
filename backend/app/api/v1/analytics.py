@@ -129,7 +129,7 @@ def get_dashboard_stats(
     recent_activity = [
         {
             "id": t.id,
-            "status": t.status.value,
+            "status": t.status,
             "source": t.source,
             "destination": t.destination,
             "route": t.route_details or f"{t.source} → {t.destination}",
@@ -193,7 +193,7 @@ def export_csv(
     writer.writerow(["ID", "Source", "Destination", "Vehicle ID", "Driver ID", "Cargo Weight (kg)", "Planned Distance (km)", "Status", "Start Time", "End Time"])
     trips = db.query(Trip).all()
     for t in trips:
-        writer.writerow([t.id, t.source, t.destination, t.vehicle_id, t.driver_id, t.cargo_weight, t.planned_distance, t.status.value, t.start_time, t.end_time])
+        writer.writerow([t.id, t.source, t.destination, t.vehicle_id, t.driver_id, t.cargo_weight, t.planned_distance, t.status, t.start_time, t.end_time])
 
     writer.writerow([])
 
@@ -202,7 +202,7 @@ def export_csv(
     writer.writerow(["ID", "Registration", "Make", "Model", "Type", "Capacity (kg)", "Odometer", "Acquisition Cost", "Status"])
     vehicles = db.query(Vehicle).all()
     for v in vehicles:
-        writer.writerow([v.id, v.registration_number, v.make, v.model, v.vehicle_type.value if v.vehicle_type else "", v.capacity, v.odometer, v.acquisition_cost, v.status.value])
+        writer.writerow([v.id, v.registration_number, v.make, v.model, v.vehicle_type if v.vehicle_type else "", v.capacity, v.odometer, v.acquisition_cost, v.status])
 
     writer.writerow([])
 
@@ -211,7 +211,7 @@ def export_csv(
     writer.writerow(["ID", "Name", "License Number", "Category", "License Expiry", "Contact", "Safety Score", "Status"])
     drivers = db.query(Driver).all()
     for d in drivers:
-        writer.writerow([d.id, d.name, d.license_number, d.license_category or "", d.license_expiry, d.contact_number or "", d.safety_score, d.status.value])
+        writer.writerow([d.id, d.name, d.license_number, d.license_category or "", d.license_expiry, d.contact_number or "", d.safety_score, d.status])
 
     writer.writerow([])
 
@@ -229,7 +229,7 @@ def export_csv(
     writer.writerow(["ID", "Vehicle ID", "Description", "Cost", "Start Date", "End Date", "Status"])
     maintenance = db.query(Maintenance).all()
     for m in maintenance:
-        writer.writerow([m.id, m.vehicle_id, m.description, m.cost, m.start_date, m.end_date, m.status.value])
+        writer.writerow([m.id, m.vehicle_id, m.description, m.cost, m.start_date, m.end_date, m.status])
 
     output.seek(0)
     return StreamingResponse(
