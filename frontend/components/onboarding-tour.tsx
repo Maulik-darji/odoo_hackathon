@@ -84,6 +84,7 @@ export function OnboardingTour() {
   };
 
   return (
+    // @ts-ignore
     <Joyride
       steps={TOUR_STEPS}
       run={run}
