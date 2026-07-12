@@ -38,13 +38,13 @@ class ApiError extends Error {
 }
 
 let isRefreshing = false;
-let refreshSubscribers: ((token: string) => void)[] = [];
+let refreshSubscribers: ((token: string | null) => void)[] = [];
 
-const subscribeTokenRefresh = (cb: (token: string) => void) => {
+const subscribeTokenRefresh = (cb: (token: string | null) => void) => {
   refreshSubscribers.push(cb);
 };
 
-const onRefreshed = (token: string) => {
+const onRefreshed = (token: string | null) => {
   refreshSubscribers.map((cb) => cb(token));
   refreshSubscribers = [];
 };
@@ -101,22 +101,36 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
             // Retry the original request
             headers.set("Authorization", `Bearer ${data.access_token}`);
             response = await fetch(`${API_BASE_URL}${endpoint}`, { ...options, headers });
-            // Refresh failed, logout
+          } else {
+            onRefreshed(null);
             clearAuthAndRedirect();
           }
         } catch (error) {
+          onRefreshed(null);
           clearAuthAndRedirect();
         } finally {
           isRefreshing = false;
         }
       } else {
         // Wait for the token to be refreshed
-        return new Promise<T>((resolve) => {
+        return new Promise<T>((resolve, reject) => {
           subscribeTokenRefresh((newToken) => {
-            headers.set("Authorization", `Bearer ${newToken}`);
-            fetch(`${API_BASE_URL}${endpoint}`, { ...options, headers })
-              .then((res) => res.json())
-              .then(resolve);
+            if (newToken) {
+              headers.set("Authorization", `Bearer ${newToken}`);
+              fetch(`${API_BASE_URL}${endpoint}`, { ...options, headers })
+                .then(async (res) => {
+                  if (!res.ok) {
+                    let err = "An error occurred";
+                    try { const data = await res.json(); err = data.detail || err; } catch {}
+                    throw new ApiError(err, res.status);
+                  }
+                  return res.json();
+                })
+                .then(resolve)
+                .catch(reject);
+            } else {
+              reject(new ApiError("Session expired", 401));
+            }
           });
         });
       }

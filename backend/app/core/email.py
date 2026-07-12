@@ -1,4 +1,5 @@
 import smtplib
+import socket
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from app.core.config import settings
@@ -31,7 +32,9 @@ async def send_verification_email(email_to: str, otp_code: str):
     message.attach(MIMEText(html_content, "html"))
 
     try:
-        server = smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT)
+        # Set a default socket timeout for all smtplib operations to prevent hanging on network drops
+        socket.setdefaulttimeout(10)
+        server = smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=10)
         server.ehlo()
         if settings.SMTP_TLS:
             server.starttls()
