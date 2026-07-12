@@ -30,7 +30,7 @@ export default function AdminLoginPage() {
         is_approved: true,
       }));
       sessionStorage.setItem("userRole", "Fleet Manager");
-      router.push("/manage-access");
+      router.push("/admin/manage-access");
     } else {
       setError("Invalid credentials");
     }

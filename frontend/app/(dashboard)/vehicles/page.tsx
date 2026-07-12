@@ -23,12 +23,39 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Search, MoreVertical, Edit, Trash, Truck } from "lucide-react";
+import { Plus, Search, MoreVertical, Edit, Trash, Truck, ShieldAlert } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+} from "@/components/ui/dropdown-menu";
 
 export default function VehiclesPage() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [editingVehicle, setEditingVehicle] = useState<any>(null);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+
+  const getVehicleStatusColor = (status: string) => {
+    switch (status) {
+      case "Available":
+        return "bg-emerald-50 text-emerald-700 border-emerald-200/60";
+      case "On Trip":
+        return "bg-blue-50 text-blue-700 border-blue-200/60";
+      case "In Shop":
+        return "bg-red-50 text-red-700 border-red-200/60";
+      case "Retired":
+        return "bg-slate-50 text-slate-700 border-slate-200/60";
+      default:
+        return "bg-slate-50 text-slate-700 border-slate-200/60";
+    }
+  };
 
   const { data: vehicles = [], isLoading } = useQuery({
     queryKey: ["vehicles"],
@@ -44,6 +71,30 @@ export default function VehiclesPage() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to create vehicle");
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: any }) => api.updateVehicle(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+      toast.success("Vehicle updated successfully");
+      setIsEditOpen(false);
+      setEditingVehicle(null);
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to update vehicle");
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => api.deleteVehicle(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+      toast.success("Vehicle deleted successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to delete vehicle");
     },
   });
 
@@ -63,7 +114,20 @@ export default function VehiclesPage() {
       capacity: parseFloat(formData.get("capacity") as string),
     });
   };
-
+  const handleEditSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!editingVehicle) return;
+    const formData = new FormData(e.currentTarget);
+    updateMutation.mutate({
+      id: editingVehicle.id,
+      data: {
+        registration_number: formData.get("registration_number"),
+        make: formData.get("make"),
+        model: formData.get("model"),
+        capacity: parseFloat(formData.get("capacity") as string),
+      }
+    });
+  };
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -105,6 +169,40 @@ export default function VehiclesPage() {
                 {createMutation.isPending ? "Creating..." : "Save Vehicle"}
               </Button>
             </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Dialog */}
+        <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Vehicle</DialogTitle>
+            </DialogHeader>
+            {editingVehicle && (
+              <form onSubmit={handleEditSubmit} className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Registration Number</label>
+                  <Input name="registration_number" defaultValue={editingVehicle.registration_number} required />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Make</label>
+                    <Input name="make" defaultValue={editingVehicle.make} required />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Model</label>
+                    <Input name="model" defaultValue={editingVehicle.model} required />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Capacity (kg)</label>
+                  <Input type="number" name="capacity" defaultValue={editingVehicle.capacity} required />
+                </div>
+                <Button type="submit" className="w-full bg-slate-900" disabled={updateMutation.isPending}>
+                  {updateMutation.isPending ? "Saving..." : "Save Changes"}
+                </Button>
+              </form>
+            )}
           </DialogContent>
         </Dialog>
       </div>
@@ -151,14 +249,59 @@ export default function VehiclesPage() {
                     <TableCell>{vehicle.make} {vehicle.model}</TableCell>
                     <TableCell>{vehicle.capacity} kg</TableCell>
                     <TableCell>
-                      <Badge variant={vehicle.status === "Active" ? "default" : vehicle.status === "In Shop" ? "destructive" : "secondary"}>
+                      <Badge variant="outline" className={`font-semibold text-[10px] uppercase tracking-wider rounded-md ${getVehicleStatusColor(vehicle.status)}`}>
                         {vehicle.status}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" className="text-slate-400 hover:text-slate-900">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="text-slate-400 hover:text-slate-900">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48 bg-white border border-slate-100 shadow-lg rounded-xl p-1 z-50">
+                          <DropdownMenuItem 
+                            onClick={() => {
+                              setEditingVehicle(vehicle);
+                              setIsEditOpen(true);
+                            }}
+                            className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
+                          >
+                            <Edit className="w-4 h-4 text-slate-500" /> Edit Details
+                          </DropdownMenuItem>
+
+                          <DropdownMenuSub>
+                            <DropdownMenuSubTrigger className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors cursor-pointer">
+                              <Truck className="w-4 h-4 text-slate-500" /> Change Status
+                            </DropdownMenuSubTrigger>
+                            <DropdownMenuSubContent className="bg-white border border-slate-100 shadow-md rounded-lg p-1 z-50">
+                              {["Available", "On Trip", "In Shop", "Retired"].map((status) => (
+                                <DropdownMenuItem
+                                  key={status}
+                                  onClick={() => updateMutation.mutate({ id: vehicle.id, data: { status } })}
+                                  className="px-3 py-1.5 text-xs font-semibold rounded-md hover:bg-slate-50 transition-colors cursor-pointer"
+                                >
+                                  {status}
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuSubContent>
+                          </DropdownMenuSub>
+
+                          <DropdownMenuSeparator className="my-1 border-t border-slate-100" />
+                          
+                          <DropdownMenuItem 
+                            onClick={() => {
+                              if (confirm(`Are you sure you want to delete vehicle ${vehicle.registration_number}?`)) {
+                                deleteMutation.mutate(vehicle.id);
+                              }
+                            }}
+                            className="flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-lg hover:bg-red-50 text-red-600 hover:text-red-700 transition-colors cursor-pointer"
+                          >
+                            <Trash className="w-4 h-4" /> Delete Vehicle
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))}

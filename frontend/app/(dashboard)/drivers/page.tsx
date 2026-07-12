@@ -30,6 +30,21 @@ export default function DriversPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddOpen, setIsAddOpen] = useState(false);
 
+  const getDriverStatusColor = (status: string) => {
+    switch (status) {
+      case "Available":
+        return "bg-emerald-50 text-emerald-700 border-emerald-200/60";
+      case "On Trip":
+        return "bg-blue-50 text-blue-700 border-blue-200/60";
+      case "Off Duty":
+        return "bg-amber-50 text-amber-700 border-amber-200/60";
+      case "Suspended":
+        return "bg-red-50 text-red-700 border-red-200/60";
+      default:
+        return "bg-slate-50 text-slate-700 border-slate-200/60";
+    }
+  };
+
   const { data: drivers = [], isLoading } = useQuery({
     queryKey: ["drivers"],
     queryFn: api.getDrivers,
@@ -148,7 +163,7 @@ export default function DriversPage() {
                         {isExpired && " (Expired)"}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={driver.status === "Active" ? "default" : "secondary"}>
+                        <Badge variant="outline" className={`font-semibold text-[10px] uppercase tracking-wider rounded-md ${getDriverStatusColor(driver.status)}`}>
                           {driver.status}
                         </Badge>
                       </TableCell>
