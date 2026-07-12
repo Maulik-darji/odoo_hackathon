@@ -6,6 +6,7 @@ import { api, UserResponse } from "@/lib/api";
 
 interface AuthContextType {
   user: UserResponse | null;
+  setUser: (user: UserResponse | null) => void;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
@@ -106,9 +107,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const clearError = () => setError(null);
 
   return (
-    <AuthContext.Provider
       value={{
         user,
+        setUser,
         isAuthenticated: !!user,
         isLoading,
         error,
