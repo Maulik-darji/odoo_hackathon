@@ -3,8 +3,6 @@
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { useAuth } from "@/context/auth-context";
-import { api } from "@/lib/api";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 // Need dynamic import for react-joyride since it uses browser globals
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -49,25 +47,19 @@ const TOUR_STEPS = [
 ];
 
 export function OnboardingTour() {
-  const { user, setUser } = useAuth();
+  const { user } = useAuth();
   const [run, setRun] = useState(false);
-  const queryClient = useQueryClient();
-
-  const completeMutation = useMutation({
-    mutationFn: api.completeTour,
-    onSuccess: (updatedUser) => {
-      setUser(updatedUser);
-      queryClient.setQueryData(["auth-user"], updatedUser);
-    }
-  });
 
   useEffect(() => {
-    // Only run if the user exists, has not completed the tour, and hasn't locally skipped it recently
-    if (user && user.tour_completed === false) {
-      const localSkip = localStorage.getItem("transitops_tour_completed");
-      if (!localSkip) {
-        setRun(true);
-      }
+    // Only show tour ONCE — check localStorage flag
+    const tourDone = localStorage.getItem("transitops_tour_completed");
+    if (tourDone) return; // Never show again
+
+    // Show only for logged-in users
+    if (user) {
+      // Small delay to let the sidebar render first
+      const timer = setTimeout(() => setRun(true), 500);
+      return () => clearTimeout(timer);
     }
   }, [user]);
 
@@ -77,10 +69,8 @@ export function OnboardingTour() {
 
     if (finishedStatuses.includes(status) || action === "close") {
       setRun(false);
+      // Permanently mark tour as completed in localStorage
       localStorage.setItem("transitops_tour_completed", "true");
-      
-      // Save permanently in the backend
-      completeMutation.mutate();
     }
   };
 
@@ -93,10 +83,17 @@ export function OnboardingTour() {
       showSkipButton
       showProgress
       callback={handleJoyrideCallback}
+      locale={{
+        back: "Back",
+        close: "Close",
+        last: "Done",
+        next: "Next",
+        skip: "Skip Tour",
+      }}
       styles={{
         options: {
-          primaryColor: "#0f172a", // slate-900
-          textColor: "#334155", // slate-700
+          primaryColor: "#0f172a",
+          textColor: "#334155",
           backgroundColor: "#ffffff",
           arrowColor: "#ffffff",
           zIndex: 10000,
@@ -116,8 +113,9 @@ export function OnboardingTour() {
           fontSize: "14px",
         },
         buttonSkip: {
-          color: "#94a3b8",
+          color: "#ef4444",
           fontSize: "14px",
+          fontWeight: 600,
         }
       }}
     />

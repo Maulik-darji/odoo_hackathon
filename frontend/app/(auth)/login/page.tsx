@@ -22,7 +22,6 @@ import { Eye, EyeOff } from "lucide-react";
 const loginSchema = zod.object({
   email: zod.string().email({ message: "Please enter a valid email address" }),
   password: zod.string().min(1, { message: "Password is required" }),
-  role: zod.enum(["Fleet Manager", "Dispatcher", "Safety Officer", "Financial Analyst"]),
 });
 
 type LoginFormValues = zod.infer<typeof loginSchema>;
@@ -39,9 +38,6 @@ export default function LoginPage() {
     formState: { errors },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: {
-      role: "Dispatcher",
-    }
   });
 
   const onSubmit = async (data: LoginFormValues) => {
@@ -49,7 +45,7 @@ export default function LoginPage() {
     setSubmitError(null);
     clearError();
     try {
-      await login(data.email, data.password, data.role);
+      await login(data.email, data.password);
     } catch (err: any) {
       setSubmitError(err.message || "Invalid email or password");
     } finally {
@@ -117,22 +113,10 @@ export default function LoginPage() {
             )}
           </div>
 
-          {/* Role selector functionality as requested */}
-          <div className="space-y-2.5">
-            <Label htmlFor="role" className="text-sm font-semibold text-slate-700 uppercase tracking-wide text-xs">ROLE (RBAC)</Label>
-            <select
-              id="role"
-              className="w-full h-12 px-3 rounded-lg border border-slate-200/60 bg-white/80 focus-visible:ring-blue-500 text-sm focus:outline-none"
-              {...register("role")}
-            >
-              <option value="Fleet Manager">Fleet Manager</option>
-              <option value="Dispatcher">Dispatcher</option>
-              <option value="Safety Officer">Safety Officer</option>
-              <option value="Financial Analyst">Financial Analyst</option>
-            </select>
-            {errors.role && (
-              <p className="text-xs font-semibold text-red-500">{errors.role.message}</p>
-            )}
+          {/* Role info — read-only, determined by database */}
+          <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Role-based access</p>
+            <p className="text-xs text-slate-500">Your role is assigned during registration and enforced by the system. You will only see pages relevant to your approved role.</p>
           </div>
         </CardContent>
         <CardFooter className="flex flex-col space-y-6 pb-8 px-8 pt-4">
@@ -143,17 +127,6 @@ export default function LoginPage() {
           >
             {isSubmitting ? "Signing in..." : "Sign in"}
           </Button>
-
-          {/* Scoped role access summary */}
-          <div className="w-full pt-4 border-t border-slate-100 text-left">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Access is scoped by role after login:</p>
-            <ul className="text-xs text-slate-500 space-y-1 font-medium list-disc pl-4">
-              <li>Fleet Manager → Fleet, Maintenance</li>
-              <li>Dispatcher → Dashboard, Trips</li>
-              <li>Safety Officer → Drivers, Compliance</li>
-              <li>Financial Analyst → Fuel & Expenses, Analytics</li>
-            </ul>
-          </div>
 
           <div className="text-sm text-center text-slate-500">
             Don't have an account?{" "}

@@ -178,17 +178,25 @@ export default function DashboardLayout({
       {/* Sidebar - glassmorphism style */}
       <aside className={`border-r border-white/40 bg-white/60 backdrop-blur-xl flex flex-col justify-between shrink-0 transition-all duration-300 relative z-20 ${isSidebarOpen ? 'w-64' : 'w-20'}`}>
         <div className="flex flex-col">
-          {/* Logo */}
+          {/* Logo / Hamburger */}
           <div className="h-16 px-6 border-b border-black/5 flex items-center justify-between gap-2 overflow-hidden">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="w-7 h-7 bg-slate-900 rounded-lg flex items-center justify-center shrink-0">
-                <span className="text-white font-semibold text-xs">T</span>
-              </div>
-              {isSidebarOpen && <span className="font-semibold text-base tracking-tight text-slate-900 transition-opacity whitespace-nowrap">TransitOps</span>}
-            </Link>
-            <Button variant="ghost" size="icon" onClick={toggleSidebar} className="shrink-0 -mr-2">
-              <Menu className="h-4 w-4 text-slate-500" />
-            </Button>
+            {isSidebarOpen ? (
+              <>
+                <Link href="/" className="flex items-center gap-2">
+                  <div className="w-7 h-7 bg-slate-900 rounded-lg flex items-center justify-center shrink-0">
+                    <span className="text-white font-semibold text-xs">T</span>
+                  </div>
+                  <span className="font-semibold text-base tracking-tight text-slate-900 transition-opacity whitespace-nowrap">TransitOps</span>
+                </Link>
+                <Button variant="ghost" size="icon" onClick={toggleSidebar} className="shrink-0 -mr-2">
+                  <Menu className="h-4 w-4 text-slate-500" />
+                </Button>
+              </>
+            ) : (
+              <Button variant="ghost" size="icon" onClick={toggleSidebar} className="mx-auto">
+                <Menu className="h-5 w-5 text-slate-500" />
+              </Button>
+            )}
           </div>
 
           {/* Navigation Links */}
@@ -214,10 +222,13 @@ export default function DashboardLayout({
           </nav>
         </div>
         {/* User Menu */}
-        <div className="p-4 border-t border-black/5 flex items-center justify-between">
+        <div className="px-4 py-3 border-t border-black/5 flex items-center gap-3">
+          <div className="w-8 h-8 bg-slate-800 rounded-full flex items-center justify-center shrink-0">
+            <span className="text-white font-semibold text-xs">{user?.name?.charAt(0)?.toUpperCase() || "U"}</span>
+          </div>
           {isSidebarOpen && (
-            <div className="flex flex-col min-w-0 pr-2">
-              <span className="text-sm font-semibold text-slate-900 truncate">
+            <div className="flex flex-col min-w-0 flex-1">
+              <span className="text-sm font-semibold text-slate-900 truncate leading-tight">
                 {user?.name || "User Name"}
               </span>
               <span className="text-xs text-slate-500 truncate text-left">
@@ -229,8 +240,8 @@ export default function DashboardLayout({
             variant="ghost"
             size="icon"
             onClick={logout}
-            className={`text-slate-500 hover:text-slate-900 rounded-lg ${!isSidebarOpen ? "w-full justify-center" : ""}`}
-            title={!isSidebarOpen ? "Logout" : undefined}
+            className={`text-slate-500 hover:text-slate-900 rounded-lg shrink-0 ${!isSidebarOpen ? "hidden" : ""}`}
+            title="Logout"
           >
             <LogOut className="w-4 h-4" />
           </Button>
