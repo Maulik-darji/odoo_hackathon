@@ -13,6 +13,7 @@ export interface UserResponse {
   email: string;
   name: string | null;
   role: string;
+  tour_completed: boolean;
   created_at: string;
 }
 

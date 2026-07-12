@@ -10,7 +10,15 @@ import { PlayCircle, User, Building, Bell } from "lucide-react";
 import { toast } from "sonner";
 
 export default function SettingsPage() {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
+
+  if (isLoading || !user) {
+    return (
+      <div className="p-8 text-center text-slate-500">
+        Loading settings...
+      </div>
+    );
+  }
 
   const handleRestartTour = () => {
     localStorage.removeItem("transitops_tour_completed");
