@@ -136,6 +136,7 @@ export default function VehiclesPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[200px]">Registration</TableHead>
+                  <TableHead>Type</TableHead>
                   <TableHead>Make / Model</TableHead>
                   <TableHead>Capacity</TableHead>
                   <TableHead>Status</TableHead>
@@ -146,6 +147,7 @@ export default function VehiclesPage() {
                 {filteredVehicles.map((vehicle: any) => (
                   <TableRow key={vehicle.id}>
                     <TableCell className="font-medium text-slate-900">{vehicle.registration_number}</TableCell>
+                    <TableCell><Badge variant="outline" className="bg-slate-50 text-slate-700 font-semibold text-[10px] uppercase tracking-wider">{vehicle.vehicle_type}</Badge></TableCell>
                     <TableCell>{vehicle.make} {vehicle.model}</TableCell>
                     <TableCell>{vehicle.capacity} kg</TableCell>
                     <TableCell>
