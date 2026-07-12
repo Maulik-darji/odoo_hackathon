@@ -7,7 +7,7 @@ import { api } from "@/lib/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 // Need dynamic import for react-joyride since it uses browser globals
-const Joyride = dynamic(() => import("react-joyride").then((mod) => (mod.default || mod.Joyride || mod) as any), { ssr: false });
+const Joyride = dynamic(() => import("react-joyride").then((mod: any) => (mod.default || mod.Joyride || mod)), { ssr: false });
 
 const TOUR_STEPS = [
   {
