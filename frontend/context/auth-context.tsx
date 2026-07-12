@@ -66,6 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: payload.sub,
         name: email.split("@")[0],
         role: "Fleet Manager",
+        tour_completed: false,
         created_at: new Date().toISOString(),
       };
       
