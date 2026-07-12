@@ -23,7 +23,7 @@ def get_current_user(
                 email=admin_email,
                 name="Admin User",
                 password_hash=get_password_hash("14224"),
-                role=RoleEnum.FLEET_MANAGER,
+                role=RoleEnum.ADMIN,
                 is_admin=True,
                 is_approved=True
             )

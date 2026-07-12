@@ -4,6 +4,7 @@ import enum
 from app.db.database import Base
 
 class RoleEnum(str, enum.Enum):
+    ADMIN = "Admin"
     FLEET_MANAGER = "Fleet Manager"
     DISPATCHER = "Dispatcher"
     SAFETY_OFFICER = "Safety Officer"

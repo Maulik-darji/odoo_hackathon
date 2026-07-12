@@ -26,12 +26,12 @@ export default function AdminLoginPage() {
         id: 0,
         email: ADMIN_EMAIL,
         name: "Admin",
-        role: "Fleet Manager",
+        role: "Admin",
         is_admin: true,
         is_approved: true,
       }));
-      sessionStorage.setItem("userRole", "Fleet Manager");
-      router.push("/admin/manage-access");
+      sessionStorage.setItem("userRole", "Admin");
+      window.location.href = "/admin/manage-access";
     } else {
       setError("Invalid credentials");
     }

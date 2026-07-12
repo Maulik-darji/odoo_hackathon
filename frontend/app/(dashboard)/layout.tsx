@@ -90,17 +90,17 @@ export default function DashboardLayout({
   };
 
   const navigation = [
-    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, tourClass: "tour-dashboard" },
-    { name: "Vehicles", href: "/vehicles", icon: Truck, tourClass: "tour-vehicles" },
-    { name: "Drivers", href: "/drivers", icon: Users, tourClass: "tour-drivers" },
-    { name: "Trips", href: "/trips", icon: Route, tourClass: "tour-trips" },
-    { name: "Maintenance", href: "/maintenance", icon: Wrench, tourClass: "tour-maintenance" },
-    { name: "Fuel & Expenses", href: "/expenses", icon: Fuel, tourClass: "tour-expenses" },
-    { name: "Analytics", href: "/analytics", icon: BarChart3, tourClass: "tour-analytics" },
+    { name: "Dashboard", href: isAdmin ? "/admin/dashboard" : "/dashboard", icon: LayoutDashboard, tourClass: "tour-dashboard" },
+    { name: "Vehicles", href: isAdmin ? "/admin/vehicles" : "/vehicles", icon: Truck, tourClass: "tour-vehicles" },
+    { name: "Drivers", href: isAdmin ? "/admin/drivers" : "/drivers", icon: Users, tourClass: "tour-drivers" },
+    { name: "Trips", href: isAdmin ? "/admin/trips" : "/trips", icon: Route, tourClass: "tour-trips" },
+    { name: "Maintenance", href: isAdmin ? "/admin/maintenance" : "/maintenance", icon: Wrench, tourClass: "tour-maintenance" },
+    { name: "Fuel & Expenses", href: isAdmin ? "/admin/expenses" : "/expenses", icon: Fuel, tourClass: "tour-expenses" },
+    { name: "Analytics", href: isAdmin ? "/admin/analytics" : "/analytics", icon: BarChart3, tourClass: "tour-analytics" },
     { name: "Manage access", href: "/admin/manage-access", icon: ShieldCheck, tourClass: "tour-manage-access" },
-    { name: "Settings", href: "/settings", icon: Settings, tourClass: "tour-settings" },
+    { name: "Settings", href: isAdmin ? "/admin/settings" : "/settings", icon: Settings, tourClass: "tour-settings" },
     { name: "Suspended accounts", href: "/admin/suspended-accounts", icon: ShieldAlert, tourClass: "tour-suspended" },
-    { name: "Upgrade", href: "/upgrade", icon: Sparkles, tourClass: "tour-upgrade" },
+    { name: "Upgrade", href: isAdmin ? "/admin/upgrade" : "/upgrade", icon: Sparkles, tourClass: "tour-upgrade" },
   ];
 
   // RBAC routing definition
