@@ -37,6 +37,7 @@ export default function MaintenancePage() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [editingLog, setEditingLog] = useState<any>(null);
 
   const { data: maintenanceLogs = [], isLoading } = useQuery({ queryKey: ["maintenance"], queryFn: api.getMaintenanceLogs });
   const { data: vehicles = [] } = useQuery({ queryKey: ["vehicles"], queryFn: api.getVehicles });
@@ -72,6 +73,11 @@ export default function MaintenancePage() {
       queryClient.invalidateQueries({ queryKey: ["maintenance"] });
       queryClient.invalidateQueries({ queryKey: ["vehicles"] });
       toast.success("Maintenance updated");
+      setIsAddOpen(false);
+      setEditingLog(null);
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to update");
     }
   });
 
@@ -84,13 +90,19 @@ export default function MaintenancePage() {
     const formData = new FormData(e.currentTarget);
     const dateStr = formData.get("start_date") as string;
     
-    createMutation.mutate({
+    const data = {
       vehicle_id: parseInt(formData.get("vehicle_id") as string, 10),
       description: formData.get("description"),
       cost: parseFloat(formData.get("cost") as string),
       status: formData.get("status"),
       start_date: new Date(dateStr).toISOString(),
-    });
+    };
+    
+    if (editingLog) {
+      updateMutation.mutate({ id: editingLog.id, data });
+    } else {
+      createMutation.mutate(data);
+    }
   };
 
   return (
@@ -101,20 +113,23 @@ export default function MaintenancePage() {
           <p className="text-sm text-slate-500 mt-1">Track vehicle repairs, service logs, and maintenance costs.</p>
         </div>
 
-        <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+        <Dialog open={isAddOpen} onOpenChange={(open) => {
+          setIsAddOpen(open);
+          if (!open) setEditingLog(null);
+        }}>
           <DialogTrigger render={
-            <Button className="bg-slate-900 hover:bg-slate-800 text-white">
+            <Button className="bg-slate-900 hover:bg-slate-800 text-white" onClick={() => setEditingLog(null)}>
               <Plus className="h-4 w-4 mr-2" /> Log Maintenance
             </Button>
           } />
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Log Maintenance</DialogTitle>
+              <DialogTitle>{editingLog ? "Edit Maintenance" : "Log Maintenance"}</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+            <form key={editingLog ? editingLog.id : 'new'} onSubmit={handleSubmit} className="space-y-4 pt-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Select Vehicle</label>
-                <select name="vehicle_id" className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm" required>
+                <select name="vehicle_id" defaultValue={editingLog?.vehicle_id || ""} className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm" required>
                   <option value="">Select a vehicle...</option>
                   {vehicles.map((v: any) => (
                     <option key={v.id} value={v.id}>{v.registration_number}</option>
@@ -123,28 +138,28 @@ export default function MaintenancePage() {
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Description</label>
-                <Input name="description" placeholder="e.g. Oil Change & Tire Rotation" required />
+                <Input name="description" defaultValue={editingLog?.description} placeholder="e.g. Oil Change & Tire Rotation" required />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Cost (₹)</label>
-                  <Input type="number" name="cost" required />
+                  <Input type="number" step="0.01" name="cost" defaultValue={editingLog?.cost} required />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Start Date</label>
-                  <Input type="date" name="start_date" required />
+                  <Input type="date" name="start_date" defaultValue={editingLog ? new Date(editingLog.start_date).toISOString().split('T')[0] : ""} required />
                 </div>
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Status</label>
-                <select name="status" className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm" required>
+                <select name="status" defaultValue={editingLog?.status || "Scheduled"} className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm" required>
                   <option value="Scheduled">Scheduled</option>
                   <option value="In Progress">In Progress (Moves vehicle to In Shop)</option>
                   <option value="Completed">Completed</option>
                 </select>
               </div>
-              <Button type="submit" className="w-full bg-slate-900" disabled={createMutation.isPending}>
-                {createMutation.isPending ? "Logging..." : "Log Maintenance"}
+              <Button type="submit" className="w-full bg-slate-900" disabled={createMutation.isPending || updateMutation.isPending}>
+                {createMutation.isPending || updateMutation.isPending ? "Saving..." : (editingLog ? "Update" : "Log Maintenance")}
               </Button>
             </form>
           </DialogContent>
@@ -239,9 +254,17 @@ export default function MaintenancePage() {
                               <DropdownMenuItem
                                 onClick={() => updateMutation.mutate({ id: log.id, data: { status: "Scheduled" } })}
                               >
-                                <Edit className="h-4 w-4 mr-2 text-slate-500" /> Reopen
+                                <PlayCircle className="h-4 w-4 mr-2 text-slate-500" /> Reopen
                               </DropdownMenuItem>
                             )}
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setEditingLog(log);
+                                setIsAddOpen(true);
+                              }}
+                            >
+                              <Edit className="h-4 w-4 mr-2 text-slate-500" /> Edit
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               className="text-red-600 focus:text-red-600"

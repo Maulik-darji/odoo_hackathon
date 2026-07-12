@@ -71,6 +71,9 @@ export default function TripsPage() {
       queryClient.invalidateQueries({ queryKey: ["drivers"] });
       queryClient.invalidateQueries({ queryKey: ["dashboardStats"] });
       toast.success("Trip updated successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to update trip");
     }
   });
 

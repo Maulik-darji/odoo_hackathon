@@ -23,7 +23,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Search, MoreVertical, Fuel, FileText, Trash } from "lucide-react";
+import { Plus, Search, MoreVertical, Fuel, FileText, Trash, Edit2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,6 +35,7 @@ export default function ExpensesPage() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<any>(null);
 
   const { data: expenses = [], isLoading } = useQuery({ queryKey: ["expenses"], queryFn: api.getExpenses });
   const { data: vehicles = [] } = useQuery({ queryKey: ["vehicles"], queryFn: api.getVehicles });
@@ -49,6 +50,20 @@ export default function ExpensesPage() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to log expense");
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number, data: any }) => api.updateExpense(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["expenses"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardStats"] });
+      toast.success("Expense updated successfully");
+      setIsAddOpen(false);
+      setEditingExpense(null);
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to update expense");
     },
   });
 
@@ -73,13 +88,19 @@ export default function ExpensesPage() {
     const formData = new FormData(e.currentTarget);
     const dateStr = formData.get("date") as string;
     
-    createMutation.mutate({
+    const data = {
       vehicle_id: formData.get("vehicle_id") ? parseInt(formData.get("vehicle_id") as string, 10) : undefined,
       type: formData.get("type"),
       amount: parseFloat(formData.get("amount") as string),
       description: formData.get("description"),
       date: new Date(dateStr).toISOString(),
-    });
+    };
+    
+    if (editingExpense) {
+      updateMutation.mutate({ id: editingExpense.id, data });
+    } else {
+      createMutation.mutate(data);
+    }
   };
 
   return (
@@ -90,20 +111,23 @@ export default function ExpensesPage() {
           <p className="text-sm text-slate-500 mt-1">Track operational costs, fuel logs, and tolls.</p>
         </div>
 
-        <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+        <Dialog open={isAddOpen} onOpenChange={(open) => {
+          setIsAddOpen(open);
+          if (!open) setEditingExpense(null);
+        }}>
           <DialogTrigger render={
-            <Button className="bg-slate-900 hover:bg-slate-800 text-white">
+            <Button className="bg-slate-900 hover:bg-slate-800 text-white" onClick={() => setEditingExpense(null)}>
               <Plus className="h-4 w-4 mr-2" /> Log Expense
             </Button>
           } />
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Log New Expense</DialogTitle>
+              <DialogTitle>{editingExpense ? "Edit Expense" : "Log New Expense"}</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+            <form key={editingExpense ? editingExpense.id : 'new'} onSubmit={handleSubmit} className="space-y-4 pt-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Type</label>
-                <select name="type" className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm" required>
+                <select name="type" defaultValue={editingExpense?.category || editingExpense?.type || "Fuel"} className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm" required>
                   <option value="Fuel">Fuel</option>
                   <option value="Toll">Toll</option>
                   <option value="Maintenance">Maintenance</option>
@@ -112,11 +136,11 @@ export default function ExpensesPage() {
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Description</label>
-                <Input name="description" placeholder="e.g. Highway 41 Toll" required />
+                <Input name="description" defaultValue={editingExpense?.description} placeholder="e.g. Highway 41 Toll" required />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Vehicle (Optional)</label>
-                <select name="vehicle_id" className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm">
+                <select name="vehicle_id" defaultValue={editingExpense?.vehicle_id || ""} className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm">
                   <option value="">No specific vehicle</option>
                   {vehicles.map((v: any) => (
                     <option key={v.id} value={v.id}>{v.registration_number}</option>
@@ -126,15 +150,15 @@ export default function ExpensesPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Amount (₹)</label>
-                  <Input type="number" step="0.01" name="amount" required />
+                  <Input type="number" step="0.01" name="amount" defaultValue={editingExpense?.amount} required />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Date</label>
-                  <Input type="date" name="date" required />
+                  <Input type="date" name="date" defaultValue={editingExpense ? new Date(editingExpense.date).toISOString().split('T')[0] : ""} required />
                 </div>
               </div>
-              <Button type="submit" className="w-full bg-slate-900" disabled={createMutation.isPending}>
-                {createMutation.isPending ? "Logging..." : "Save Expense"}
+              <Button type="submit" className="w-full bg-slate-900" disabled={createMutation.isPending || updateMutation.isPending}>
+                {createMutation.isPending || updateMutation.isPending ? "Saving..." : (editingExpense ? "Update Expense" : "Save Expense")}
               </Button>
             </form>
           </DialogContent>
@@ -198,6 +222,15 @@ export default function ExpensesPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-48 bg-white border border-slate-100 shadow-lg rounded-xl p-1 z-50">
+                            <DropdownMenuItem 
+                              onClick={() => {
+                                setEditingExpense(expense);
+                                setIsAddOpen(true);
+                              }}
+                              className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg hover:bg-slate-50 cursor-pointer"
+                            >
+                              <Edit2 className="w-4 h-4 text-slate-500" /> Edit
+                            </DropdownMenuItem>
                             <DropdownMenuItem 
                               onClick={() => {
                                 if (confirm("Are you sure you want to delete this expense?")) {

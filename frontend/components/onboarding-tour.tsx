@@ -57,11 +57,8 @@ export function OnboardingTour() {
 
     // Show only for logged-in users
     if (user) {
-      // Bypasses the tour entirely for admin accounts
-      if (user.is_admin || user.email === "maulik.darji2005@gmail.com" || user.email === "admin@transitops.com") {
-        localStorage.setItem("transitops_tour_completed", "true");
-        return;
-      }
+      // Mark as completed immediately so it never shows again even if they refresh
+      localStorage.setItem("transitops_tour_completed", "true");
 
       // Mark as completed immediately so it never shows again even if they refresh
       localStorage.setItem("transitops_tour_completed", "true");

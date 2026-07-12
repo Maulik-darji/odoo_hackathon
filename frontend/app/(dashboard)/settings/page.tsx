@@ -23,6 +23,23 @@ import { Badge } from "@/components/ui/badge";
 export default function SettingsPage() {
   const { user, isLoading } = useAuth();
 
+  const [depotName, setDepotName] = useState("Gandhinagar Depot G3V");
+  const [currency, setCurrency] = useState("INR (₹)");
+  const [distanceUnit, setDistanceUnit] = useState("Kilometers");
+
+  const handleRestartTour = () => {
+    localStorage.removeItem("transitops_tour_completed");
+    toast.success("Tour reset! The page will now reload to start the guide.");
+    setTimeout(() => {
+      window.location.href = "/dashboard";
+    }, 1000);
+  };
+
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault();
+    toast.success("Settings saved successfully.");
+  };
+
   if (isLoading || !user) {
     return (
       <div className="p-8 text-center text-slate-500">
@@ -30,20 +47,6 @@ export default function SettingsPage() {
       </div>
     );
   }
-
-  const handleRestartTour = () => {
-    localStorage.removeItem("transitops_tour_completed");
-    toast.success("Tour reset! Refresh the page to start the onboarding guide again.");
-  };
-
-  const [depotName, setDepotName] = useState("Gandhinagar Depot G3V");
-  const [currency, setCurrency] = useState("INR (₹)");
-  const [distanceUnit, setDistanceUnit] = useState("Kilometers");
-
-  const handleSave = (e: React.FormEvent) => {
-    e.preventDefault();
-    toast.success("Settings saved successfully.");
-  };
 
   // RBAC permission matrix
   const rbacData = [
@@ -68,10 +71,10 @@ export default function SettingsPage() {
 
       <Tabs defaultValue="profile" className="space-y-6">
         <TabsList className="bg-slate-100/50 p-1">
-          <TabsTrigger value="profile" className="data-[state=active]:bg-white data-[state=active]:shadow-sm"><User className="w-4 h-4 mr-2" /> Profile</TabsTrigger>
-          <TabsTrigger value="organization" className="data-[state=active]:bg-white data-[state=active]:shadow-sm"><Building className="w-4 h-4 mr-2" /> General</TabsTrigger>
-          <TabsTrigger value="rbac" className="data-[state=active]:bg-white data-[state=active]:shadow-sm"><ShieldCheck className="w-4 h-4 mr-2" /> RBAC</TabsTrigger>
-          <TabsTrigger value="notifications" className="data-[state=active]:bg-white data-[state=active]:shadow-sm"><Bell className="w-4 h-4 mr-2" /> Notifications</TabsTrigger>
+          <TabsTrigger value="profile" className="data-[state=active]:bg-white data-[state=active]:shadow-sm"><User className="w-4 h-4" /> Profile</TabsTrigger>
+          <TabsTrigger value="organization" className="data-[state=active]:bg-white data-[state=active]:shadow-sm"><Building className="w-4 h-4" /> General</TabsTrigger>
+          <TabsTrigger value="rbac" className="data-[state=active]:bg-white data-[state=active]:shadow-sm"><ShieldCheck className="w-4 h-4" /> RBAC</TabsTrigger>
+          <TabsTrigger value="notifications" className="data-[state=active]:bg-white data-[state=active]:shadow-sm"><Bell className="w-4 h-4" /> Notifications</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile" className="space-y-6">

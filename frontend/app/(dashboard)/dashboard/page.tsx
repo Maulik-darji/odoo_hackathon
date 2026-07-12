@@ -162,70 +162,63 @@ export default function DashboardPage() {
 
       {/* KPI Cards Row - exactly 7 cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-        <Card className="shadow-none border-blue-200/50 bg-blue-50/50">
+        <Card className="shadow-none border-blue-200 bg-blue-100">
           <CardHeader className="p-3 pb-1.5 flex flex-row items-center justify-between">
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Active Vehicles</span>
-            <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
           </CardHeader>
           <CardContent className="p-3 pt-0">
             <div className="text-2xl font-bold tracking-tight text-slate-900">{kpis.on_trip_vehicles}</div>
           </CardContent>
         </Card>
 
-        <Card className="shadow-none border-emerald-200/50 bg-emerald-50/50">
+        <Card className="shadow-none border-emerald-200 bg-emerald-100">
           <CardHeader className="p-3 pb-1.5 flex flex-row items-center justify-between">
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Available Vehicles</span>
-            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
           </CardHeader>
           <CardContent className="p-3 pt-0">
             <div className="text-2xl font-bold tracking-tight text-slate-900">{kpis.available_vehicles}</div>
           </CardContent>
         </Card>
 
-        <Card className="shadow-none border-amber-200/50 bg-amber-50/50">
+        <Card className="shadow-none border-amber-200 bg-amber-100">
           <CardHeader className="p-3 pb-1.5 flex flex-row items-center justify-between">
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">In Maintenance</span>
-            <span className="w-1.5 h-1.5 bg-amber-500 rounded-full"></span>
           </CardHeader>
           <CardContent className="p-3 pt-0">
             <div className="text-2xl font-bold tracking-tight text-slate-900">{String(kpis.in_shop).padStart(2, '0')}</div>
           </CardContent>
         </Card>
 
-        <Card className="shadow-none border-indigo-200/50 bg-indigo-50/50">
+        <Card className="shadow-none border-indigo-200 bg-indigo-100">
           <CardHeader className="p-3 pb-1.5 flex flex-row items-center justify-between">
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Active Trips</span>
-            <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full"></span>
           </CardHeader>
           <CardContent className="p-3 pt-0">
             <div className="text-2xl font-bold tracking-tight text-slate-900">{kpis.active_trips}</div>
           </CardContent>
         </Card>
 
-        <Card className="shadow-none border-slate-200/80 bg-slate-50/80">
+        <Card className="shadow-none border-slate-200 bg-slate-100">
           <CardHeader className="p-3 pb-1.5 flex flex-row items-center justify-between">
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Pending Trips</span>
-            <span className="w-1.5 h-1.5 bg-slate-400 rounded-full"></span>
           </CardHeader>
           <CardContent className="p-3 pt-0">
             <div className="text-2xl font-bold tracking-tight text-slate-900">{String(kpis.pending_trips).padStart(2, '0')}</div>
           </CardContent>
         </Card>
 
-        <Card className="shadow-none border-sky-200/50 bg-sky-50/50">
+        <Card className="shadow-none border-sky-200 bg-sky-100">
           <CardHeader className="p-3 pb-1.5 flex flex-row items-center justify-between">
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Drivers On Duty</span>
-            <span className="w-1.5 h-1.5 bg-sky-500 rounded-full"></span>
           </CardHeader>
           <CardContent className="p-3 pt-0">
             <div className="text-2xl font-bold tracking-tight text-slate-900">{kpis.drivers_on_duty}</div>
           </CardContent>
         </Card>
 
-        <Card className="shadow-none border-slate-200/80 bg-slate-100/50">
+        <Card className="shadow-none border-slate-300 bg-slate-200">
           <CardHeader className="p-3 pb-1.5 flex flex-row items-center justify-between">
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Fleet Utilization</span>
-            <span className="w-1.5 h-1.5 bg-slate-900 rounded-full"></span>
           </CardHeader>
           <CardContent className="p-3 pt-0">
             <div className="text-2xl font-bold tracking-tight text-slate-900">{kpis.fleet_utilization}</div>
