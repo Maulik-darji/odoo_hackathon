@@ -30,7 +30,7 @@ def update_vehicle(db: Session, vehicle_id: int, vehicle_in: VehicleUpdate) -> V
     db_vehicle = get_vehicle_by_id(db, vehicle_id)
     if not db_vehicle:
         raise HTTPException(
-            status_code=status.HTTP_444_NOT_RESPONSE_CLASS,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Vehicle not found."
         )
     
@@ -56,7 +56,7 @@ def delete_vehicle(db: Session, vehicle_id: int) -> Vehicle:
     db_vehicle = get_vehicle_by_id(db, vehicle_id)
     if not db_vehicle:
         raise HTTPException(
-            status_code=status.HTTP_444_NOT_RESPONSE_CLASS,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Vehicle not found."
         )
     db.delete(db_vehicle)

@@ -15,6 +15,7 @@ class VehicleCreate(VehicleBase):
     pass
 
 class VehicleUpdate(BaseModel):
+    registration_number: Optional[str] = None
     make: Optional[str] = None
     model: Optional[str] = None
     capacity: Optional[float] = None

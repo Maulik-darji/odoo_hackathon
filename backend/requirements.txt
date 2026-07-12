@@ -3,10 +3,10 @@ uvicorn[standard]==0.35.0
 sqlalchemy==2.0.43
 alembic
 psycopg2-binary
-psycopg[binary]==3.2.10
 pydantic[email]
 pydantic-settings
 python-jose[cryptography]
 passlib[bcrypt]
+bcrypt
 python-multipart
 python-dotenv==1.1.1
