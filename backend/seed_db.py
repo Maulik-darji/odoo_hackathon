@@ -24,6 +24,16 @@ def seed_database():
     db: Session = SessionLocal()
     
     try:
+        # Clear existing data to ensure only seeded data remains (excluding admin users)
+        print("Clearing old mock data...")
+        db.query(Expense).delete()
+        db.query(Maintenance).delete()
+        db.query(Trip).delete()
+        db.query(Driver).delete()
+        db.query(Vehicle).delete()
+        db.query(User).filter(User.is_admin == False).delete()
+        db.commit()
+
         # Create 20 Users
         print("Creating 20 Users...")
         roles = ["Fleet Manager", "Dispatcher", "Safety Officer", "Financial Analyst"]
