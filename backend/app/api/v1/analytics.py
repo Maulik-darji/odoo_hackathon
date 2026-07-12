@@ -66,7 +66,7 @@ def get_dashboard_stats(
         v_revenue = db.query(func.sum(Trip.revenue)).filter(Trip.vehicle_id == v.id, Trip.status == TripStatusEnum.COMPLETED).scalar() or 0.0
         if v_revenue == 0.0:
             total_dist = db.query(func.sum(Trip.planned_distance)).filter(Trip.vehicle_id == v.id, Trip.status == TripStatusEnum.COMPLETED).scalar() or 0.0
-            v_revenue = total_dist * 2.5 # $2.5 per km estimate
+            v_revenue = total_dist * 2.5 # ₹2.5 per km estimate
             
         v_maintenance = db.query(func.sum(Maintenance.cost)).filter(Maintenance.vehicle_id == v.id).scalar() or 0.0
         v_fuel = db.query(func.sum(Expense.amount)).filter(Expense.vehicle_id == v.id, Expense.type == ExpenseTypeEnum.FUEL).scalar() or 0.0

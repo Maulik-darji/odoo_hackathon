@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { useState, useCallback, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ResponsiveContainer,
@@ -17,7 +18,10 @@ import {
   Line,
   CartesianGrid,
 } from "recharts";
-import { BarChart3, TrendingUp, DollarSign, Activity } from "lucide-react";
+import { BarChart3, TrendingUp, IndianRupee, Activity, ZoomIn, ZoomOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
 
 const COLORS = ["#0f172a", "#3b82f6", "#64748b", "#cbd5e1"];
 
@@ -37,15 +41,60 @@ export default function AnalyticsPage() {
 
   const fleetStatusData = data?.fleet_status || [];
 
-  // Mocked monthly performance metrics for detailed analytics
-  const monthlyData = [
-    { name: "Jan", cost: 4000, trips: 24, fuel: 2400 },
-    { name: "Feb", cost: 3000, trips: 18, fuel: 1398 },
-    { name: "Mar", cost: 9800, trips: 29, fuel: 9800 },
-    { name: "Apr", cost: 3908, trips: 20, fuel: 3908 },
-    { name: "May", cost: 4800, trips: 27, fuel: 4800 },
-    { name: "Jun", cost: 5800, trips: 35, fuel: 3800 },
+  // Zoom level state for the revenue chart
+  const [zoomLevel, setZoomLevel] = useState<"day" | "month" | "year">("month");
+
+  // Multi-granularity revenue data
+  const dailyData = [
+    { name: "Jul 1", revenue: 820 }, { name: "Jul 2", revenue: 1150 },
+    { name: "Jul 3", revenue: 640 }, { name: "Jul 4", revenue: 980 },
+    { name: "Jul 5", revenue: 1420 }, { name: "Jul 6", revenue: 760 },
+    { name: "Jul 7", revenue: 1100 }, { name: "Jul 8", revenue: 530 },
+    { name: "Jul 9", revenue: 1340 }, { name: "Jul 10", revenue: 890 },
+    { name: "Jul 11", revenue: 1560 }, { name: "Jul 12", revenue: 720 },
+    { name: "Jul 13", revenue: 1050 }, { name: "Jul 14", revenue: 1280 },
   ];
+
+  const monthlyData = [
+    { name: "Jan", revenue: 2400 }, { name: "Feb", revenue: 1398 },
+    { name: "Mar", revenue: 9800 }, { name: "Apr", revenue: 3908 },
+    { name: "May", revenue: 4800 }, { name: "Jun", revenue: 3800 },
+    { name: "Jul", revenue: 5200 }, { name: "Aug", revenue: 4100 },
+    { name: "Sep", revenue: 6300 }, { name: "Oct", revenue: 3500 },
+    { name: "Nov", revenue: 4700 }, { name: "Dec", revenue: 5900 },
+  ];
+
+  const yearlyData = [
+    { name: "2022", revenue: 32000 }, { name: "2023", revenue: 45000 },
+    { name: "2024", revenue: 58000 }, { name: "2025", revenue: 41000 },
+    { name: "2026", revenue: 52000 },
+  ];
+
+  const chartData = zoomLevel === "day" ? dailyData : zoomLevel === "month" ? monthlyData : yearlyData;
+  const chartLabel = zoomLevel === "day" ? "Daily Revenue (last 14 days)" : zoomLevel === "month" ? "Monthly Revenue (this year)" : "Yearly Revenue (all time)";
+
+  // Scroll-to-zoom handler with debounce
+  const zoomLevels: ("day" | "month" | "year")[] = ["year", "month", "day"];
+  const scrollCooldown = useRef(false);
+
+  const handleChartWheel = useCallback((e: React.WheelEvent) => {
+    if (scrollCooldown.current) return;
+    const currentIdx = zoomLevels.indexOf(zoomLevel);
+
+    if (e.deltaY < 0 && currentIdx < zoomLevels.length - 1) {
+      // Scroll up = zoom in (toward Day)
+      setZoomLevel(zoomLevels[currentIdx + 1]);
+      scrollCooldown.current = true;
+      setTimeout(() => { scrollCooldown.current = false; }, 400);
+      e.preventDefault();
+    } else if (e.deltaY > 0 && currentIdx > 0) {
+      // Scroll down = zoom out (toward Year)
+      setZoomLevel(zoomLevels[currentIdx - 1]);
+      scrollCooldown.current = true;
+      setTimeout(() => { scrollCooldown.current = false; }, 400);
+      e.preventDefault();
+    }
+  }, [zoomLevel]);
 
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-6">
@@ -84,7 +133,7 @@ export default function AnalyticsPage() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-slate-500">Operational Cost</CardTitle>
-                <DollarSign className="h-4 w-4 text-slate-400" />
+                <IndianRupee className="h-4 w-4 text-slate-400" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{kpis.operational_cost}</div>
@@ -109,28 +158,67 @@ export default function AnalyticsPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <Card className="shadow-none border-slate-200">
+            <Card className="shadow-none border-slate-200" onWheel={handleChartWheel}>
               <CardHeader>
-                <CardTitle className="text-base font-semibold">Monthly Revenue</CardTitle>
-                <CardDescription>Monthly visualization of total trip revenue generated.</CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-base font-semibold">Revenue Overview</CardTitle>
+                    <CardDescription>{chartLabel}</CardDescription>
+                  </div>
+                  <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-full">
+                    <button
+                      onClick={() => setZoomLevel("day")}
+                      className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-semibold tracking-wide transition-all ${
+                        zoomLevel === "day" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-900"
+                      }`}
+                    >
+                      <ZoomIn className="w-3 h-3" /> Day
+                    </button>
+                    <button
+                      onClick={() => setZoomLevel("month")}
+                      className={`px-3 py-1.5 rounded-full text-[11px] font-semibold tracking-wide transition-all ${
+                        zoomLevel === "month" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-900"
+                      }`}
+                    >
+                      Month
+                    </button>
+                    <button
+                      onClick={() => setZoomLevel("year")}
+                      className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-semibold tracking-wide transition-all ${
+                        zoomLevel === "year" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-900"
+                      }`}
+                    >
+                      <ZoomOut className="w-3 h-3" /> Year
+                    </button>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={monthlyData}>
+                  <BarChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} tickLine={false} />
-                    <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} />
-                    <Tooltip cursor={{ fill: "#f1f5f9" }} />
-                    <Bar dataKey="fuel" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Revenue (₹)" />
+                    <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} />
+                    <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} tickFormatter={(v) => `₹${v >= 1000 ? `${(v/1000).toFixed(0)}k` : v}`} />
+                    <Tooltip
+                      cursor={{ fill: "#f1f5f9" }}
+                      formatter={(value: number) => [`₹${value.toLocaleString('en-IN')}`, "Revenue"]}
+                      contentStyle={{ borderRadius: "12px", border: "1px solid #e2e8f0", fontSize: "12px" }}
+                    />
+                    <Bar dataKey="revenue" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Revenue (₹)" animationDuration={400} />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
             </Card>
 
             <Card className="shadow-none border-slate-200">
-              <CardHeader>
-                <CardTitle className="text-base font-semibold">Top Performing Vehicles (ROI)</CardTitle>
-                <CardDescription>Highest return rate vehicles in the active fleet.</CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <div>
+                  <CardTitle className="text-base font-semibold">Top Performing Vehicles (ROI)</CardTitle>
+                  <CardDescription>Highest return rate vehicles in the active fleet.</CardDescription>
+                </div>
+                <Link href="/vehicles">
+                  <Button variant="ghost" size="sm" className="text-xs text-blue-600 hover:text-blue-700">View All</Button>
+                </Link>
               </CardHeader>
               <CardContent className="h-80 space-y-4 overflow-y-auto">
                 {(data?.vehicle_roi || []).slice(0, 4).map((item: any) => (

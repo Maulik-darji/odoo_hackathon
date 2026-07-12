@@ -23,7 +23,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Search, MoreVertical, Edit, Trash, Truck, ShieldAlert } from "lucide-react";
+import { Plus, Search, MoreVertical, Edit, Trash, Truck, ShieldAlert, Filter, X } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,6 +41,11 @@ export default function VehiclesPage() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<any>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [filterType, setFilterType] = useState<string>("All");
+  const [filterStatus, setFilterStatus] = useState<string>("All");
+
+  const vehicleTypes = ["All", "Truck", "Van", "Bus", "Trailer"];
+  const vehicleStatuses = ["All", "Available", "On Trip", "In Shop", "Retired"];
 
   const getVehicleStatusColor = (status: string) => {
     switch (status) {
@@ -51,9 +56,24 @@ export default function VehiclesPage() {
       case "In Shop":
         return "bg-red-50 text-red-700 border-red-200/60";
       case "Retired":
-        return "bg-slate-50 text-slate-700 border-slate-200/60";
+        return "bg-slate-100 text-slate-500 border-slate-200/60";
       default:
         return "bg-slate-50 text-slate-700 border-slate-200/60";
+    }
+  };
+
+  const getVehicleTypeColor = (type: string) => {
+    switch (type) {
+      case "Truck":
+        return "bg-orange-50 text-orange-700 border-orange-200";
+      case "Van":
+        return "bg-cyan-50 text-cyan-700 border-cyan-200";
+      case "Bus":
+        return "bg-purple-50 text-purple-700 border-purple-200";
+      case "Trailer":
+        return "bg-pink-50 text-pink-700 border-pink-200";
+      default:
+        return "bg-slate-50 text-slate-700 border-slate-200";
     }
   };
 
@@ -98,11 +118,16 @@ export default function VehiclesPage() {
     },
   });
 
-  const filteredVehicles = vehicles.filter((v: any) => 
-    v.registration_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    v.make.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    v.model.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredVehicles = vehicles.filter((v: any) => {
+    const matchesSearch = v.registration_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      v.make.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      v.model.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesType = filterType === "All" || v.vehicle_type === filterType;
+    const matchesStatus = filterStatus === "All" || v.status === filterStatus;
+    return matchesSearch && matchesType && matchesStatus;
+  }).sort((a: any, b: any) => a.id - b.id);
+
+  const activeFilterCount = (filterType !== "All" ? 1 : 0) + (filterStatus !== "All" ? 1 : 0);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -208,16 +233,66 @@ export default function VehiclesPage() {
       </div>
 
       <Card>
-        <CardHeader className="py-4 px-6 border-b border-slate-100 flex flex-row items-center justify-between">
-          <div className="relative w-72">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
-            <Input 
-              type="search" 
-              placeholder="Search vehicles..." 
-              className="pl-9 bg-slate-50/50" 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+        <CardHeader className="py-4 px-6 border-b border-slate-100 space-y-3">
+          <div className="flex flex-row items-center justify-between">
+            <div className="relative w-72">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+              <Input 
+                type="search" 
+                placeholder="Search vehicles..." 
+                className="pl-9 bg-slate-50/50" 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            {activeFilterCount > 0 && (
+              <button
+                onClick={() => { setFilterType("All"); setFilterStatus("All"); }}
+                className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-900 transition-colors"
+              >
+                <X className="h-3 w-3" /> Clear filters ({activeFilterCount})
+              </button>
+            )}
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Type filter */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Type</span>
+              <div className="flex items-center gap-1 p-0.5 bg-slate-100/80 rounded-full">
+                {vehicleTypes.map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => setFilterType(type)}
+                    className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all ${
+                      filterType === type
+                        ? "bg-white text-slate-900 shadow-sm"
+                        : "text-slate-500 hover:text-slate-800"
+                    }`}
+                  >
+                    {type}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* Status filter */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Status</span>
+              <div className="flex items-center gap-1 p-0.5 bg-slate-100/80 rounded-full">
+                {vehicleStatuses.map((status) => (
+                  <button
+                    key={status}
+                    onClick={() => setFilterStatus(status)}
+                    className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all ${
+                      filterStatus === status
+                        ? "bg-white text-slate-900 shadow-sm"
+                        : "text-slate-500 hover:text-slate-800"
+                    }`}
+                  >
+                    {status}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="p-0">
@@ -245,7 +320,7 @@ export default function VehiclesPage() {
                 {filteredVehicles.map((vehicle: any) => (
                   <TableRow key={vehicle.id}>
                     <TableCell className="font-medium text-slate-900">{vehicle.registration_number}</TableCell>
-                    <TableCell><Badge variant="outline" className="bg-slate-50 text-slate-700 font-semibold text-[10px] uppercase tracking-wider">{vehicle.vehicle_type}</Badge></TableCell>
+                    <TableCell><Badge variant="outline" className={`font-semibold text-[10px] uppercase tracking-wider ${getVehicleTypeColor(vehicle.vehicle_type)}`}>{vehicle.vehicle_type}</Badge></TableCell>
                     <TableCell>{vehicle.make} {vehicle.model}</TableCell>
                     <TableCell>{vehicle.capacity} kg</TableCell>
                     <TableCell>
@@ -260,33 +335,36 @@ export default function VehiclesPage() {
                             <MoreVertical className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48 bg-white border border-slate-100 shadow-lg rounded-xl p-1 z-50">
+                        <DropdownMenuContent align="end" className="w-52 bg-white border border-slate-100 shadow-lg rounded-xl p-1 z-50">
                           <DropdownMenuItem 
                             onClick={() => {
                               setEditingVehicle(vehicle);
                               setIsEditOpen(true);
                             }}
-                            className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
+                            className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg hover:bg-slate-50 cursor-pointer"
                           >
                             <Edit className="w-4 h-4 text-slate-500" /> Edit Details
                           </DropdownMenuItem>
 
-                          <DropdownMenuSub>
-                            <DropdownMenuSubTrigger className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors cursor-pointer">
-                              <Truck className="w-4 h-4 text-slate-500" /> Change Status
-                            </DropdownMenuSubTrigger>
-                            <DropdownMenuSubContent className="bg-white border border-slate-100 shadow-md rounded-lg p-1 z-50">
-                              {["Available", "On Trip", "In Shop", "Retired"].map((status) => (
-                                <DropdownMenuItem
-                                  key={status}
-                                  onClick={() => updateMutation.mutate({ id: vehicle.id, data: { status } })}
-                                  className="px-3 py-1.5 text-xs font-semibold rounded-md hover:bg-slate-50 transition-colors cursor-pointer"
-                                >
-                                  {status}
-                                </DropdownMenuItem>
-                              ))}
-                            </DropdownMenuSubContent>
-                          </DropdownMenuSub>
+                          <DropdownMenuSeparator className="my-1 border-t border-slate-100" />
+
+                          <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Change Status</div>
+                          {["Available", "On Trip", "In Shop", "Retired"]
+                            .filter((s) => s !== vehicle.status)
+                            .map((status) => (
+                              <DropdownMenuItem
+                                key={status}
+                                onClick={() => updateMutation.mutate({ id: vehicle.id, data: { status } })}
+                                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg hover:bg-slate-50 cursor-pointer"
+                              >
+                                <span className={`w-2 h-2 rounded-full ${
+                                  status === "Available" ? "bg-emerald-500" :
+                                  status === "On Trip" ? "bg-blue-500" :
+                                  status === "In Shop" ? "bg-red-500" : "bg-slate-400"
+                                }`} />
+                                {status}
+                              </DropdownMenuItem>
+                            ))}
 
                           <DropdownMenuSeparator className="my-1 border-t border-slate-100" />
                           
@@ -296,7 +374,7 @@ export default function VehiclesPage() {
                                 deleteMutation.mutate(vehicle.id);
                               }
                             }}
-                            className="flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-lg hover:bg-red-50 text-red-600 hover:text-red-700 transition-colors cursor-pointer"
+                            className="flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-lg hover:bg-red-50 text-red-600 hover:text-red-700 cursor-pointer"
                           >
                             <Trash className="w-4 h-4" /> Delete Vehicle
                           </DropdownMenuItem>

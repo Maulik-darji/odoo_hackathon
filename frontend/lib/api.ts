@@ -48,6 +48,16 @@ const onRefreshed = (token: string) => {
   refreshSubscribers = [];
 };
 
+const clearAuthAndRedirect = () => {
+  if (typeof window !== "undefined") {
+    sessionStorage.removeItem("access_token");
+    sessionStorage.removeItem("refresh_token");
+    sessionStorage.removeItem("user");
+    document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    window.location.href = "/login";
+  }
+};
+
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const token = typeof window !== "undefined" ? sessionStorage.getItem("access_token") : null;
   
@@ -90,16 +100,11 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
             // Retry the original request
             headers.set("Authorization", `Bearer ${data.access_token}`);
             response = await fetch(`${API_BASE_URL}${endpoint}`, { ...options, headers });
-          } else {
             // Refresh failed, logout
-            sessionStorage.removeItem("access_token");
-            sessionStorage.removeItem("refresh_token");
-            window.location.href = "/login";
+            clearAuthAndRedirect();
           }
         } catch (error) {
-          sessionStorage.removeItem("access_token");
-          sessionStorage.removeItem("refresh_token");
-          window.location.href = "/login";
+          clearAuthAndRedirect();
         } finally {
           isRefreshing = false;
         }
@@ -116,8 +121,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
       }
     } else if (endpoint !== "/auth/login") {
       // No refresh token available, redirect to login
-      sessionStorage.removeItem("access_token");
-      window.location.href = "/login";
+      clearAuthAndRedirect();
     }
   }
 

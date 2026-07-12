@@ -15,6 +15,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableFooter,
 } from "@/components/ui/table";
 import {
   Dialog,
@@ -23,7 +24,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Search, MoreVertical, Wrench, CheckCircle } from "lucide-react";
+import { Plus, Search, MoreVertical, Wrench, CheckCircle, Edit, Trash, PlayCircle } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 export default function MaintenancePage() {
   const queryClient = useQueryClient();
@@ -44,6 +52,18 @@ export default function MaintenancePage() {
     onError: (error: any) => {
       toast.error(error.message || "Failed to log maintenance");
     },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => api.deleteMaintenance(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["maintenance"] });
+      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+      toast.success("Maintenance log deleted");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to delete");
+    }
   });
 
   const updateMutation = useMutation({
@@ -107,7 +127,7 @@ export default function MaintenancePage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Cost ($)</label>
+                  <label className="text-sm font-medium">Cost (₹)</label>
                   <Input type="number" name="cost" required />
                 </div>
                 <div className="space-y-2">
@@ -172,7 +192,7 @@ export default function MaintenancePage() {
                     <TableRow key={log.id}>
                       <TableCell className="font-medium text-slate-900">{vehicle?.registration_number}</TableCell>
                       <TableCell>{log.description}</TableCell>
-                      <TableCell>${log.cost.toFixed(2)}</TableCell>
+                      <TableCell>₹{log.cost.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</TableCell>
                       <TableCell>{new Date(log.start_date).toLocaleDateString()}</TableCell>
                       <TableCell>
                         <Badge variant={
@@ -194,14 +214,61 @@ export default function MaintenancePage() {
                             <CheckCircle className="h-4 w-4 mr-1" /> Finish
                           </Button>
                         )}
-                        <Button variant="ghost" size="icon" className="text-slate-400 hover:text-slate-900">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="text-slate-400 hover:text-slate-900">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48">
+                            {log.status === "Scheduled" && (
+                              <DropdownMenuItem
+                                onClick={() => updateMutation.mutate({ id: log.id, data: { status: "In Progress" } })}
+                              >
+                                <PlayCircle className="h-4 w-4 mr-2 text-blue-500" /> Start Work
+                              </DropdownMenuItem>
+                            )}
+                            {(log.status === "Scheduled" || log.status === "In Progress") && (
+                              <DropdownMenuItem
+                                onClick={() => updateMutation.mutate({ id: log.id, data: { status: "Completed", end_date: new Date().toISOString() } })}
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2 text-emerald-500" /> Mark Completed
+                              </DropdownMenuItem>
+                            )}
+                            {log.status === "Completed" && (
+                              <DropdownMenuItem
+                                onClick={() => updateMutation.mutate({ id: log.id, data: { status: "Scheduled" } })}
+                              >
+                                <Edit className="h-4 w-4 mr-2 text-slate-500" /> Reopen
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-red-600 focus:text-red-600"
+                              onClick={() => {
+                                if (confirm("Are you sure you want to delete this maintenance log?")) {
+                                  deleteMutation.mutate(log.id);
+                                }
+                              }}
+                            >
+                              <Trash className="h-4 w-4 mr-2" /> Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   );
                 })}
               </TableBody>
+              <TableFooter>
+                <TableRow>
+                  <TableCell colSpan={2} className="font-semibold text-right">Total Maintenance Cost</TableCell>
+                  <TableCell className="font-bold text-slate-900">
+                    ₹{filteredLogs.reduce((sum: number, log: any) => sum + (log.cost || 0), 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                  </TableCell>
+                  <TableCell colSpan={3}></TableCell>
+                </TableRow>
+              </TableFooter>
             </Table>
           )}
         </CardContent>

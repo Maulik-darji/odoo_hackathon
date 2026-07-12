@@ -14,6 +14,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableFooter,
 } from "@/components/ui/table";
 import {
   Dialog,
@@ -22,7 +23,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Search, MoreVertical, Fuel, FileText } from "lucide-react";
+import { Plus, Search, MoreVertical, Fuel, FileText, Trash } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function ExpensesPage() {
   const queryClient = useQueryClient();
@@ -36,11 +43,24 @@ export default function ExpensesPage() {
     mutationFn: api.createExpense,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["expenses"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardStats"] });
       toast.success("Expense logged successfully");
       setIsAddOpen(false);
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to log expense");
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => api.deleteExpense(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["expenses"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardStats"] });
+      toast.success("Expense deleted successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to delete expense");
     },
   });
 
@@ -55,7 +75,7 @@ export default function ExpensesPage() {
     
     createMutation.mutate({
       vehicle_id: formData.get("vehicle_id") ? parseInt(formData.get("vehicle_id") as string, 10) : undefined,
-      category: formData.get("category"),
+      type: formData.get("type"),
       amount: parseFloat(formData.get("amount") as string),
       description: formData.get("description"),
       date: new Date(dateStr).toISOString(),
@@ -82,12 +102,11 @@ export default function ExpensesPage() {
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4 pt-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Category</label>
-                <select name="category" className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm" required>
+                <label className="text-sm font-medium">Type</label>
+                <select name="type" className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm" required>
                   <option value="Fuel">Fuel</option>
                   <option value="Toll">Toll</option>
-                  <option value="Permit">Permit</option>
-                  <option value="Fine">Fine</option>
+                  <option value="Maintenance">Maintenance</option>
                   <option value="Other">Other</option>
                 </select>
               </div>
@@ -106,7 +125,7 @@ export default function ExpensesPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Amount ($)</label>
+                  <label className="text-sm font-medium">Amount (₹)</label>
                   <Input type="number" step="0.01" name="amount" required />
                 </div>
                 <div className="space-y-2">
@@ -165,21 +184,46 @@ export default function ExpensesPage() {
                       <TableCell>
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-sm bg-slate-100 text-slate-700">
                           {expense.category === "Fuel" ? <Fuel className="h-3 w-3" /> : <FileText className="h-3 w-3" />}
-                          {expense.category}
+                          {expense.category || expense.type}
                         </span>
                       </TableCell>
                       <TableCell className="font-medium text-slate-900">{expense.description}</TableCell>
                       <TableCell>{vehicle?.registration_number || "-"}</TableCell>
-                      <TableCell className="text-right font-medium">${expense.amount.toFixed(2)}</TableCell>
+                      <TableCell className="text-right font-medium">₹{expense.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" className="text-slate-400 hover:text-slate-900">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="text-slate-400 hover:text-slate-900">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48 bg-white border border-slate-100 shadow-lg rounded-xl p-1 z-50">
+                            <DropdownMenuItem 
+                              onClick={() => {
+                                if (confirm("Are you sure you want to delete this expense?")) {
+                                  deleteMutation.mutate(expense.id);
+                                }
+                              }}
+                              className="flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-lg hover:bg-red-50 text-red-600 hover:text-red-700 cursor-pointer"
+                            >
+                              <Trash className="w-4 h-4" /> Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   );
                 })}
               </TableBody>
+              <TableFooter>
+                <TableRow>
+                  <TableCell colSpan={4} className="font-semibold text-right">Total Expenses</TableCell>
+                  <TableCell className="text-right font-bold text-slate-900">
+                    ₹{filteredExpenses.reduce((sum: number, exp: any) => sum + (exp.amount || 0), 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                  </TableCell>
+                  <TableCell></TableCell>
+                </TableRow>
+              </TableFooter>
             </Table>
           )}
         </CardContent>

@@ -10,7 +10,7 @@ import {
   Users,
   Route,
   Activity,
-  DollarSign,
+  IndianRupee,
   Clock,
 } from "lucide-react";
 
@@ -62,8 +62,8 @@ export default function DashboardPage() {
     pending_trips: 0,
     total_trips: 0,
     completed_trips: 0,
-    operational_cost: "$0.00",
-    fuel_cost: "$0.00",
+    operational_cost: "₹0.00",
+    fuel_cost: "₹0.00",
     fuel_efficiency: "0 km/L",
   };
 
@@ -162,7 +162,7 @@ export default function DashboardPage() {
 
       {/* KPI Cards Row - exactly 7 cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-        <Card className="shadow-none border-slate-200/80 bg-white/60">
+        <Card className="shadow-none border-blue-200/50 bg-blue-50/50">
           <CardHeader className="p-3 pb-1.5 flex flex-row items-center justify-between">
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Active Vehicles</span>
             <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
@@ -172,7 +172,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-none border-slate-200/80 bg-white/60">
+        <Card className="shadow-none border-emerald-200/50 bg-emerald-50/50">
           <CardHeader className="p-3 pb-1.5 flex flex-row items-center justify-between">
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Available Vehicles</span>
             <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
@@ -182,7 +182,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-none border-slate-200/80 bg-white/60">
+        <Card className="shadow-none border-amber-200/50 bg-amber-50/50">
           <CardHeader className="p-3 pb-1.5 flex flex-row items-center justify-between">
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">In Maintenance</span>
             <span className="w-1.5 h-1.5 bg-amber-500 rounded-full"></span>
@@ -192,7 +192,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-none border-slate-200/80 bg-white/60">
+        <Card className="shadow-none border-indigo-200/50 bg-indigo-50/50">
           <CardHeader className="p-3 pb-1.5 flex flex-row items-center justify-between">
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Active Trips</span>
             <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full"></span>
@@ -202,7 +202,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-none border-slate-200/80 bg-white/60">
+        <Card className="shadow-none border-slate-200/80 bg-slate-50/80">
           <CardHeader className="p-3 pb-1.5 flex flex-row items-center justify-between">
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Pending Trips</span>
             <span className="w-1.5 h-1.5 bg-slate-400 rounded-full"></span>
@@ -212,7 +212,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-none border-slate-200/80 bg-white/60">
+        <Card className="shadow-none border-sky-200/50 bg-sky-50/50">
           <CardHeader className="p-3 pb-1.5 flex flex-row items-center justify-between">
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Drivers On Duty</span>
             <span className="w-1.5 h-1.5 bg-sky-500 rounded-full"></span>
@@ -222,7 +222,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-none border-slate-200/80 bg-white/60">
+        <Card className="shadow-none border-slate-200/80 bg-slate-100/50">
           <CardHeader className="p-3 pb-1.5 flex flex-row items-center justify-between">
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Fleet Utilization</span>
             <span className="w-1.5 h-1.5 bg-slate-900 rounded-full"></span>

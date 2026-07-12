@@ -21,7 +21,7 @@ export default function AdminLoginPage() {
 
     if (email === ADMIN_EMAIL && code === ADMIN_CODE) {
       sessionStorage.setItem("access_token", "admin-hardcoded-token");
-      document.cookie = "access_token=admin-hardcoded-token; path=/; max-age=1800; SameSite=Lax";
+      document.cookie = "access_token=admin-hardcoded-token; path=/; max-age=28800; SameSite=Lax";
       sessionStorage.setItem("user", JSON.stringify({
         id: 0,
         email: ADMIN_EMAIL,

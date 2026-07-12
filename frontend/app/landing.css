@@ -86,15 +86,15 @@
   align-items: center;
   gap: 0.25rem;
   padding: 0.35rem 0.5rem;
-  background: rgba(245, 244, 237, 0.75);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.2) !important;
+  backdrop-filter: blur(16px) saturate(180%) contrast(90%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(180%) contrast(90%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.45) !important;
   border-radius: 100px;
   box-shadow:
-    0 20px 40px rgba(0, 0, 0, 0.06),
-    0 1px 3px rgba(0, 0, 0, 0.02),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    0 20px 40px rgba(0, 0, 0, 0.03),
+    0 1px 3px rgba(0, 0, 0, 0.01),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
   position: relative;
   z-index: 101;
 }

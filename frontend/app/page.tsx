@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Truck, User, Route, Wrench, IndianRupee } from "lucide-react";
 
 export default function Home() {
   return (
@@ -14,7 +15,16 @@ export default function Home() {
           <span className="logo-text">TransitOps</span>
         </Link>
 
-        <nav className="nav-pill">
+        <nav 
+          className="nav-pill"
+          style={{
+            background: "rgba(255, 255, 255, 0.15)",
+            backdropFilter: "blur(40px) saturate(150%)",
+            WebkitBackdropFilter: "blur(40px) saturate(150%)",
+            border: "1px solid rgba(255, 255, 255, 0.25)",
+            boxShadow: "0 20px 40px -15px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.35)"
+          }}
+        >
           <a href="#platform" className="nav-link">Platform</a>
           <a href="#modules" className="nav-link">Modules</a>
           <a href="#workflow" className="nav-link">Workflow</a>
@@ -131,27 +141,27 @@ export default function Home() {
         </h2>
         <div className="modules-grid">
           <div className="module-card">
-            <div className="module-icon">🚛</div>
+            <div className="module-icon text-slate-700 bg-slate-100 flex items-center justify-center p-3 rounded-xl w-fit mb-4"><Truck size={28} /></div>
             <h3>Vehicle Registry</h3>
             <p>Register vehicles with type, capacity, odometer, acquisition cost. Status auto-updates on dispatch and maintenance.</p>
           </div>
           <div className="module-card">
-            <div className="module-icon">👤</div>
+            <div className="module-icon text-slate-700 bg-slate-100 flex items-center justify-center p-3 rounded-xl w-fit mb-4"><User size={28} /></div>
             <h3>Driver Management</h3>
             <p>Track licenses, categories, expiry dates, safety scores. Expired or suspended drivers are blocked from dispatch.</p>
           </div>
           <div className="module-card">
-            <div className="module-icon">🗺️</div>
+            <div className="module-icon text-slate-700 bg-slate-100 flex items-center justify-center p-3 rounded-xl w-fit mb-4"><Route size={28} /></div>
             <h3>Trip Management</h3>
             <p>Create trips with source, destination, cargo weight, planned distance. Automatic status transitions on dispatch.</p>
           </div>
           <div className="module-card">
-            <div className="module-icon">🔧</div>
+            <div className="module-icon text-slate-700 bg-slate-100 flex items-center justify-center p-3 rounded-xl w-fit mb-4"><Wrench size={28} /></div>
             <h3>Maintenance</h3>
             <p>Log maintenance records. Creating one auto-switches vehicle to In Shop, closing restores to Available.</p>
           </div>
           <div className="module-card">
-            <div className="module-icon">💰</div>
+            <div className="module-icon text-slate-700 bg-slate-100 flex items-center justify-center p-3 rounded-xl w-fit mb-4"><IndianRupee size={28} /></div>
             <h3>Fuel & Expenses</h3>
             <p>Track fuel (liters + cost), tolls, and other expenses per vehicle and trip. Compute operational costs automatically.</p>
           </div>

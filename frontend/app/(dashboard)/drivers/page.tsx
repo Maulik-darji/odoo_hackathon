@@ -23,12 +23,24 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Search, MoreVertical, Users } from "lucide-react";
+import { Plus, Search, MoreVertical, Users, Edit, Trash } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+} from "@/components/ui/dropdown-menu";
 
 export default function DriversPage() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [editingDriver, setEditingDriver] = useState<any>(null);
+  const [isEditOpen, setIsEditOpen] = useState(false);
 
   const getDriverStatusColor = (status: string) => {
     switch (status) {
@@ -62,10 +74,34 @@ export default function DriversPage() {
     },
   });
 
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: any }) => api.updateDriver(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["drivers"] });
+      toast.success("Driver updated successfully");
+      setIsEditOpen(false);
+      setEditingDriver(null);
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to update driver");
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => api.deleteDriver(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["drivers"] });
+      toast.success("Driver deleted successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to delete driver");
+    },
+  });
+
   const filteredDrivers = drivers.filter((d: any) => 
     d.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     d.license_number.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  ).sort((a: any, b: any) => a.id - b.id);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -76,6 +112,21 @@ export default function DriversPage() {
       name: formData.get("name"),
       license_number: formData.get("license_number"),
       license_expiry: new Date(dateStr).toISOString(),
+    });
+  };
+
+  const handleEditSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!editingDriver) return;
+    const formData = new FormData(e.currentTarget);
+    const dateStr = formData.get("license_expiry") as string;
+    updateMutation.mutate({
+      id: editingDriver.id,
+      data: {
+        name: formData.get("name"),
+        license_number: formData.get("license_number"),
+        license_expiry: new Date(dateStr).toISOString(),
+      }
     });
   };
 
@@ -114,6 +165,39 @@ export default function DriversPage() {
                 {createMutation.isPending ? "Adding..." : "Save Driver"}
               </Button>
             </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Dialog */}
+        <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Driver</DialogTitle>
+            </DialogHeader>
+            {editingDriver && (
+              <form onSubmit={handleEditSubmit} className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Full Name</label>
+                  <Input name="name" defaultValue={editingDriver.name} required />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">License Number</label>
+                  <Input name="license_number" defaultValue={editingDriver.license_number} required />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">License Expiry Date</label>
+                  <Input 
+                    type="date" 
+                    name="license_expiry" 
+                    defaultValue={new Date(editingDriver.license_expiry).toISOString().split('T')[0]} 
+                    required 
+                  />
+                </div>
+                <Button type="submit" className="w-full bg-slate-900" disabled={updateMutation.isPending}>
+                  {updateMutation.isPending ? "Saving..." : "Save Changes"}
+                </Button>
+              </form>
+            )}
           </DialogContent>
         </Dialog>
       </div>
@@ -168,9 +252,54 @@ export default function DriversPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" className="text-slate-400 hover:text-slate-900">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="text-slate-400 hover:text-slate-900">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48 bg-white border border-slate-100 shadow-lg rounded-xl p-1 z-50">
+                            <DropdownMenuItem 
+                              onClick={() => {
+                                setEditingDriver(driver);
+                                setIsEditOpen(true);
+                              }}
+                              className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
+                            >
+                              <Edit className="w-4 h-4 text-slate-500" /> Edit Details
+                            </DropdownMenuItem>
+
+                            <DropdownMenuSub>
+                              <DropdownMenuSubTrigger className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors cursor-pointer">
+                                <Users className="w-4 h-4 text-slate-500" /> Change Status
+                              </DropdownMenuSubTrigger>
+                              <DropdownMenuSubContent className="bg-white border border-slate-100 shadow-md rounded-lg p-1 z-50">
+                                {["Available", "On Trip", "Off Duty", "Suspended"].map((status) => (
+                                  <DropdownMenuItem
+                                    key={status}
+                                    onClick={() => updateMutation.mutate({ id: driver.id, data: { status } })}
+                                    className="px-3 py-1.5 text-xs font-semibold rounded-md hover:bg-slate-50 transition-colors cursor-pointer"
+                                  >
+                                    {status}
+                                  </DropdownMenuItem>
+                                ))}
+                              </DropdownMenuSubContent>
+                            </DropdownMenuSub>
+
+                            <DropdownMenuSeparator className="my-1 border-t border-slate-100" />
+                            
+                            <DropdownMenuItem 
+                              onClick={() => {
+                                if (confirm(`Are you sure you want to delete driver ${driver.name}?`)) {
+                                  deleteMutation.mutate(driver.id);
+                                }
+                              }}
+                              className="flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-lg hover:bg-red-50 text-red-600 hover:text-red-700 transition-colors cursor-pointer"
+                            >
+                              <Trash className="w-4 h-4" /> Delete Driver
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   );
