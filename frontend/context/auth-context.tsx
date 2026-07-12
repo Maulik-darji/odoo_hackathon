@@ -30,17 +30,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const accessToken = sessionStorage.getItem("access_token");
       if (accessToken) {
         try {
-          // Since getMe isn't implemented in the backend yet,
-          // we'll temporarily parse user info from JWT claims,
-          // or load it from sessionStorage if we saved it on login.
-          const storedUser = sessionStorage.getItem("user");
-          if (storedUser) {
-            setUser(JSON.parse(storedUser));
-          } else {
-            // If none stored, logout
-            logout();
-          }
+          const userDetails = await api.getMe();
+          sessionStorage.setItem("user", JSON.stringify(userDetails));
+          setUser(userDetails);
         } catch (err) {
+          console.error("Failed to fetch user details on load:", err);
           logout();
         }
       }
