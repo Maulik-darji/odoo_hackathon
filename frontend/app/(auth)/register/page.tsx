@@ -66,6 +66,19 @@ export default function RegisterPage() {
     }
   };
 
+  const handleResendOtp = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await api.sendOtp(email);
+      toast.success("A new verification code has been sent!");
+    } catch (err: any) {
+      setError(err.message || "Failed to resend OTP");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Triggered when submitting the OTP in Step 2
   const handleVerifyOtpAndRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -223,13 +236,23 @@ export default function RegisterPage() {
             >
               {isLoading ? "Verifying..." : "Verify & Create"}
             </Button>
-            <button
-              type="button"
-              onClick={() => setStep(1)}
-              className="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors"
-            >
-              ← Edit details
-            </button>
+            <div className="flex justify-between items-center w-full pt-2">
+              <button
+                type="button"
+                onClick={() => setStep(1)}
+                className="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors"
+              >
+                ← Edit details
+              </button>
+              <button
+                type="button"
+                onClick={handleResendOtp}
+                disabled={isLoading}
+                className="text-sm font-semibold text-blue-600 hover:text-blue-800 disabled:opacity-50 transition-colors"
+              >
+                Resend OTP
+              </button>
+            </div>
           </CardFooter>
         </form>
       )}
