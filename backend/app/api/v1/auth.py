@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.schemas.user import UserCreate, UserResponse, Token
 from app.services.auth_service import authenticate_user, create_user, get_user_by_email
-from app.core.security import create_access_token, create_refresh_token
+from app.core.security import create_access_token, create_refresh_token, get_password_hash
 from app.core.config import settings
 from jose import jwt, JWTError
 
