@@ -185,6 +185,8 @@ def seed_database():
             
             if exp_type == ExpenseTypeEnum.FUEL:
                 desc = f"Fuel Refill - {random.choice(['Bharat Petroleum', 'Indian Oil', 'HP Value', 'Reliance Petroleum'])}"
+                # Reduce fuel volume so the overall fleet average is in a realistic range (~6-8 km/L)
+                liters = random.uniform(30, 120)
             elif exp_type == ExpenseTypeEnum.TOLL:
                 desc = f"Highway Toll Tax - {random.choice(['NH48 Toll Plaza', 'Yamuna Expressway', 'FASTag Online'])}"
             elif exp_type == ExpenseTypeEnum.MAINTENANCE:
@@ -195,7 +197,7 @@ def seed_database():
             expense = Expense(
                 type=exp_type,
                 amount=amount,
-                liters=liters,
+                liters=liters if exp_type == ExpenseTypeEnum.FUEL else None,
                 date=fake.date_time_between(start_date='-30d', end_date='now', tzinfo=timezone.utc),
                 vehicle_id=random.choice(vehicles).id,
                 trip_id=random.choice(trips).id if random.choice([True, False]) else None,
